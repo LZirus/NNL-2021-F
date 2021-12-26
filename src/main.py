@@ -26,7 +26,7 @@ images = {}
 # TODO: Save Dest-Paths for processed images
 dest_paths = ["None"]
 act_src = ""
-act_dst = ""
+act_dst = 0
 
 # Config
 DEBUG = True
@@ -52,7 +52,8 @@ class Window(Frame):
 
         fileMenu.add_command(label="Open Image", command=select_image)
         fileMenu.add_command(label="Load next Image", command=next_image)
-        fileMenu.add_command(label="Change Save-Path", command=change_dst)
+        fileMenu.add_command(label="Change this Save-Location", command=change_dst)
+        fileMenu.add_command(label="Replace all Save-Locations", command=replace_dst)
         fileMenu.add_separator()
         fileMenu.add_command(label="Exit", command=self.exitProgram)
         
@@ -110,6 +111,8 @@ class popupWindow(object):
             self.select(top, text, i)
         if type == "dst":
             self.pathSelect(top, text)
+        if type == "rep":
+            self.pathReplace(top, text)
 
     def oneInput(self, top, intext):
         top.wm_title("Input")
@@ -144,6 +147,31 @@ class popupWindow(object):
         if path not in dest_paths:
             dest_paths.append(path)
             self.active.set(path)
+    
+    def selectFolderRep(self):
+        path = fd.askdirectory()
+        self.rep.config(text=path)
+            
+    def pathReplace(self, top, intext):
+        top.wm_title("Input")
+
+        self.l = Label(top, text=intext)
+        self.l.pack()
+
+        self.active = StringVar()
+        self.active.set(dest_paths[0])
+        self.drop = OptionMenu(top, self.active, *dest_paths)
+        self.drop.pack()
+        self.drop.config(width=13)
+
+        self.rep = Label(top, text='None')
+        self.rep.pack()
+        self.src = Button(top, text='Replace with', command=self.selectFolderRep)
+        self.src.pack()
+        self.src.config(width=13)
+
+        self.b = Button(top, text='Ok', command=lambda: self.cleanup("rep"))
+        self.b.pack()
 
     def pathSelect(self, top, intext):
         top.wm_title("Input")
@@ -154,13 +182,15 @@ class popupWindow(object):
         self.active = StringVar()
         self.active.set(dest_paths[act_dst])
         self.drop = OptionMenu(top, self.active, *dest_paths)
-        self.drop.pack()
+        self.drop.pack(side=LEFT)
+        self.drop.config(width=13)
 
         self.src = Button(top, text='Source', command=self.selectFolder)
-        self.src.pack()
+        self.src.pack(side=RIGHT)
+        self.src.config(width=13)
 
         self.b = Button(top, text='Ok', command=lambda: self.cleanup("select"))
-        self.b.pack()
+        self.b.pack(side=BOTTOM)
 
     # Inspired by https://www.geeksforgeeks.org/scrollable-listbox-in-python-tkinter/
     def list(self, top, intext):
@@ -280,6 +310,9 @@ class popupWindow(object):
             self.value1 = self.e1.get()
         elif type == "select":
             self.value = self.active.get()
+        elif type == "rep":
+            self.value0 = self.active.get()
+            self.value1 = self.rep.cget('text')
 
         self.top.destroy()
 
@@ -394,6 +427,34 @@ def view_annos():
     return
 
 
+def replace_dst():
+    global dest_paths
+    
+    try:
+        window.popup("Replace destination path:", 'rep')
+        c1, c2 = window.entryValues()
+    except:
+        return
+    
+    if c2 == None : return
+    if not c1 in dest_paths : return
+    if not os.path.isdir(c2) : return
+
+    dest_paths[dest_paths.index(c1)] = c2
+    
+    for img in images:
+        act_dst = images[img]['dst']
+        active_name = img
+        # Save Image
+        if act_dst != None and dest_paths[act_dst] != 'None':
+            dst_path = dest_paths[act_dst] + os.sep + active_name[:active_name.rindex('.')] + '.png'
+
+            if not exists(dst_path):
+                image_clean.save(dst_path, "PNG")
+    
+    return
+
+
 def change_dst():
     global act_dst
     # setup save-path and
@@ -404,13 +465,13 @@ def change_dst():
         return
 
     if not dst == 'None':
-        act_dst = dst
+        act_dst = dest_paths.index(dst)
     else:
         act_dst = None
 
     # Save Image
-    if not act_dst == None or act_dst == 'None':
-        dst_path = act_dst + os.sep + active_name[:active_name.rindex('.')] + '.png'
+    if act_dst != None and dest_paths[act_dst] != 'None':
+        dst_path = dest_paths[act_dst] + os.sep + active_name[:active_name.rindex('.')] + '.png'
 
         if not exists(dst_path):
             image_clean.save(dst_path, "PNG")
@@ -520,7 +581,8 @@ def select_image(path=None):
             try:
                 window.popup("Select destination path:", 'dst')
                 dst = window.entryValue()
-            except:
+            except Exception as e:
+                print(e)
                 dst = 'None'
 
             if not dst == 'None':
