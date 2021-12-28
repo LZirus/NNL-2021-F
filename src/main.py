@@ -677,9 +677,9 @@ def delete_rect():
 def add_context_menu():
     # create menubar
     menu = Menu(root, tearoff=0)
-    menu.add_command(label="Add Cat", command=addCategory)
-    menu.add_command(label="Replace Cat", command=replaceCategory)
-    menu.add_command(label="View Cats", command=listCategories)
+    menu.add_command(label="Add Category", command=addCategory)
+    menu.add_command(label="Replace Category", command=replaceCategory)
+    menu.add_command(label="View Categories", command=listCategories)
     menu.add_separator()
     menu.add_command(label="Exit", command=root.destroy)
     # define function to popup the
