@@ -9,6 +9,7 @@ import os
 from os.path import exists
 import csv
 from re import compile, split
+import traceback
 
 # Global
 root = Tk()
@@ -181,7 +182,7 @@ class popupWindow(object):
         self.l.pack()
 
         self.active = StringVar()
-        self.active.set(dest_paths[act_dst])
+        self.active.set(dest_paths[act_dst if act_dst != None else 0])
         self.drop = OptionMenu(top, self.active, *dest_paths)
         self.drop.pack(side=LEFT)
         self.drop.config(width=13)
@@ -563,7 +564,7 @@ def select_image(path=None):
             act_dst = images[name]['dst']
             act_src = images[name]['src']
             
-            if act_dst == 'None' or act_dst == None:
+            if act_dst == None or act_dst == 'None':
                 check_save = True
             
             if not os.path.isdir(dest_paths[act_dst]):
@@ -582,8 +583,8 @@ def select_image(path=None):
             try:
                 window.popup("Select destination path:", 'dst')
                 dst = window.entryValue()
-            except Exception as e:
-                print(e)
+            except Exception:
+                print(traceback.format_exc())
                 dst = 'None'
 
             if not dst == 'None':
