@@ -728,9 +728,9 @@ def select_file(save, type, inifile='', title='Open a file', initialdir='~/info_
         )
     elif type == "json":
         filetypes = (
-            ('json files', '*.json *.j *.JSON'),
+            ('json files', '*.json *.JSON'),
             ('csv files', '*.csv'),
-            ('xls files', '*.xlsx'),
+            # ('xls files', '*.xlsx'),
             ('All files', '*.*')
         )
 
