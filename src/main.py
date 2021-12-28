@@ -40,17 +40,18 @@ class Window(Frame):
         menu = Menu(self.master)
         self.master.config(menu=menu)
 
-        fileMenu = Menu(menu)
+        fileMenu = Menu(menu, tearoff=0)
         menu.add_cascade(label="File", menu=fileMenu)
         
-        annoMenu = Menu(menu)
+        annoMenu = Menu(menu, tearoff=0)
         menu.add_cascade(label="Annotations", menu=annoMenu)
 
-        categoryMenu = Menu(menu)
+        categoryMenu = Menu(menu, tearoff=0)
         menu.add_cascade(label="Categories", menu=categoryMenu)
 
         fileMenu.add_command(label="Open Image", command=select_image)
         fileMenu.add_command(label="Load next Image", command=next_image)
+        fileMenu.add_separator()
         fileMenu.add_command(label="Change this Save-Location", command=change_dst)
         fileMenu.add_command(label="Replace all Save-Locations", command=replace_dst)
         fileMenu.add_separator()
@@ -62,7 +63,9 @@ class Window(Frame):
 
         categoryMenu.add_command(label="Add", command=addCategory)
         categoryMenu.add_command(label="Replace", command=replaceCategory)
-        categoryMenu.add_command(label="List", command=listCategories)
+        categoryMenu.add_separator()
+        categoryMenu.add_command(label="Show All", command=listCategories)
+        categoryMenu.add_separator()
         categoryMenu.add_command(label="Import", command=importCategories)
         # TODO: csv support for file export
         categoryMenu.add_command(label="Export", command=exportCategories)
