@@ -1,29 +1,39 @@
 import cv2
+from PIL import ImageTk, Image, ImageDraw
+
 from tkinter import *
 from tkinter import filedialog as fd
-from tkinter import messagebox
-from PIL import ImageTk, Image, ImageDraw
-from shapely.geometry import box, Polygon, Point
+
+from shapely.geometry import box, Point
+
 import json
+import csv
 import os
 from os.path import exists
-import csv
+
 from re import compile, split
 import traceback
 
-# Global
+# ======== Global variables ========
+# UI-related globals
 root = Tk()
-image = None
-active_name = ""
-image_save = None
-image_panel = None
-image_clean = None
 window = None
+image_panel = None
 size = 1000
+
+# images save-points
+image = None
+image_save = None
+image_clean = None
+
+# main save-dictionary
+images = {}
+
+# globals for active image
+active_name = ""
 rectangles = []
 rect_to_category = []
-categories = ["None", "mask", "no mask", "baum"]
-images = {}
+categories = ["None", "mask", "no mask"]
 dest_paths = ["None"]
 act_src = ""
 act_dst = 0
@@ -31,16 +41,20 @@ act_dst = 0
 # Config
 DEBUG = True
 
-
+# Class Window:
+# - initializing top menu
+# - taking care of popup fireing and value return
 class Window(Frame):
     def __init__(self, master=None):
+        # init tkinter frame and keep reference
         Frame.__init__(self, master)
         self.master = master
 
-        # top menu
+        # --- top menu - setup ---
         menu = Menu(self.master)
         self.master.config(menu=menu)
 
+        # init tabs
         fileMenu = Menu(menu, tearoff=0)
         menu.add_cascade(label="File", menu=fileMenu)
         
@@ -50,6 +64,8 @@ class Window(Frame):
         categoryMenu = Menu(menu, tearoff=0)
         menu.add_cascade(label="Categories", menu=categoryMenu)
 
+        # add all menu-elements and bind functions to buttons
+        # -> file menu for opening Images and maintaining save-locations of processed images
         fileMenu.add_command(label="Open Image", command=select_image)
         fileMenu.add_command(label="Load next Image", command=next_image)
         fileMenu.add_separator()
@@ -58,62 +74,68 @@ class Window(Frame):
         fileMenu.add_separator()
         fileMenu.add_command(label="Exit", command=self.exitProgram)
         
+        # -> annotation menu
         annoMenu.add_command(label="Save Annotations", command=save_annos)
         annoMenu.add_command(label="Import Annotations", command=load_annos)
         annoMenu.add_command(label="View Annotations", command=view_annos)
 
+        # -> category menu
         categoryMenu.add_command(label="Add", command=addCategory)
         categoryMenu.add_command(label="Replace", command=replaceCategory)
         categoryMenu.add_separator()
         categoryMenu.add_command(label="Show All", command=listCategories)
         categoryMenu.add_separator()
         categoryMenu.add_command(label="Import", command=importCategories)
-        # TODO: csv support for file export
         categoryMenu.add_command(label="Export", command=exportCategories)
-        # TODO: add fileformat support
 
+    # create PopUp-Window and wait for user
     def popup(self, text, type):
         self.w = popupWindow(self.master, text, type)
         self.master.wait_window(self.w.top)
 
+    # creating PopUps with more settings
     def popup_select(self, text, type, rect, i):
         self.w = popupWindow(self.master, text, type, rect, i)
         self.master.wait_window(self.w.top)
 
+    # get return values from PopUp if only one value needed
     def entryValue(self):
         return self.w.value
 
+    # get return values from PopUp if two values are needed
     def entryValues(self):
         return self.w.value0, self.w.value1
 
+    # function to exit program 
     def exitProgram(self):
         exit()
 
+# class popupWindow to setup different types of popups, initiated by the Window-class
 # Inspired by https://stackoverflow.com/questions/10020885/creating-a-popup-message-box-with-an-entry-field#10021242
-
-
 class popupWindow(object):
     def __init__(self, master, text, type, rect=None, i=0):
         top = self.top = Toplevel(master)
 
+        # setting popup size (if showing annotations more space is needed)
         if type == "all":
             top.geometry(str(700)+"x"+str(150))
             self.list_all(top, text)
         else:
             top.geometry(str(int((16/9)*150))+"x"+str(150))
 
+        # switching between the functions to create PopUps
         if type == "one":
             self.oneInput(top, text)
-        if type == "two":
+        elif type == "two":
             self.twoInput(top, text)
-        if type == "list":
+        elif type == "list":
             self.list(top, text)
-        if type == "select":
+        elif type == "select":
             self.rect = rect
             self.select(top, text, i)
-        if type == "dst":
+        elif type == "dst":
             self.pathSelect(top, text)
-        if type == "rep":
+        elif type == "rep":
             self.pathReplace(top, text)
 
     def oneInput(self, top, intext):
@@ -148,7 +170,7 @@ class popupWindow(object):
         path = fd.askdirectory()
         if path not in dest_paths:
             dest_paths.append(path)
-            self.active.set(path)
+            self.active_path.set(path)
     
     def selectFolderRep(self):
         path = fd.askdirectory()
@@ -181,9 +203,9 @@ class popupWindow(object):
         self.l = Label(top, text=intext)
         self.l.pack()
 
-        self.active = StringVar()
-        self.active.set(dest_paths[act_dst if act_dst != None else 0])
-        self.drop = OptionMenu(top, self.active, *dest_paths)
+        self.active_path = StringVar()
+        self.active_path.set(dest_paths[act_dst if act_dst != None else 0])
+        self.drop = OptionMenu(top, self.active_path, *dest_paths)
         self.drop.pack(side=LEFT)
         self.drop.config(width=13)
 
@@ -191,7 +213,7 @@ class popupWindow(object):
         self.src.pack(side=RIGHT)
         self.src.config(width=13)
 
-        self.b = Button(top, text='Ok', command=lambda: self.cleanup("select"))
+        self.b = Button(top, text='Ok', command=lambda: self.cleanup("dst"))
         self.b.pack(side=BOTTOM)
 
     # Inspired by https://www.geeksforgeeks.org/scrollable-listbox-in-python-tkinter/
@@ -315,6 +337,8 @@ class popupWindow(object):
         elif type == "rep":
             self.value0 = self.active.get()
             self.value1 = self.rep.cget('text')
+        elif type == "dst":
+            self.value = self.active_path.get()
 
         self.top.destroy()
 
