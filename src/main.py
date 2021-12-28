@@ -88,6 +88,9 @@ class Window(Frame):
         categoryMenu.add_separator()
         categoryMenu.add_command(label="Import", command=importCategories)
         categoryMenu.add_command(label="Export", command=exportCategories)
+        # TODO: csv support for file export
+        categoryMenu.add_command(label="Export Categories as CSV", command=exportCSV)
+        # TODO: add fileformat support
 
     # create PopUp-Window and wait for user
     def popup(self, text, type):
@@ -391,6 +394,13 @@ def exportCategories():
         json.dump(dic, outfile)
     return
 
+def exportCSV():
+    # Writing to csv file
+    with open(select_file(True, "csv", "categories.csv", title='Save Categories as CSV', initialdir='~/categories.csv'), "w") as outfile:
+        writer = csv.writer(outfile)
+        writer.writerow(categories)
+    return
+
 
 def save_annos():
     global images
@@ -644,6 +654,12 @@ def select_file(save, type, inifile='', title='Open a file', initialdir='~/info_
             ('json files', '*.json *.j *.JSON'),
             ('csv files', '*.csv'),
             ('xls files', '*.xlsx'),
+            ('All files', '*.*')
+        )
+
+    elif type == "csv":
+        filetypes = (
+            ('csv files', '*.csv'),
             ('All files', '*.*')
         )
 
