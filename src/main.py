@@ -68,8 +68,9 @@ class Window(Frame):
         categoryMenu.add_command(label="Show All", command=listCategories)
         categoryMenu.add_separator()
         categoryMenu.add_command(label="Import", command=importCategories)
-        # TODO: csv support for file export
         categoryMenu.add_command(label="Export", command=exportCategories)
+        # TODO: csv support for file export
+        categoryMenu.add_command(label="Export Categories as CSV", command=importCategories)
         # TODO: add fileformat support
 
     def popup(self, text, type):
