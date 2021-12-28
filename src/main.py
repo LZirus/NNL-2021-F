@@ -23,7 +23,6 @@ rectangles = []
 rect_to_category = []
 categories = ["None", "mask", "no mask", "baum"]
 images = {}
-# TODO: Save Dest-Paths for processed images
 dest_paths = ["None"]
 act_src = ""
 act_dst = 0
@@ -67,7 +66,6 @@ class Window(Frame):
         categoryMenu.add_command(label="Import", command=importCategories)
         # TODO: csv support for file export
         categoryMenu.add_command(label="Export", command=exportCategories)
-        # TODO: save resized images
         # TODO: add fileformat support
 
     def popup(self, text, type):

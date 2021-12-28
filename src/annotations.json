@@ -1,0 +1,59 @@
+{
+  "categories": [
+    "None",
+    "mask",
+    "no mask",
+    "baum",
+    "fenster",
+    "haare",
+    "tie",
+    "eyes"
+  ],
+  "images": {
+    "12-with-mask.jpg": {
+      "rectangles": [
+        [721.0, 545.0, 1046.0, 738.0],
+        [165.0, 3.0, 375.0, 649.0],
+        [1417.0, 15.0, 1620.0, 601.0],
+        [669.0, 243.0, 1088.0, 497.0]
+      ],
+      "rect_to_category": [1, 4, 4, 5],
+      "dst": 1,
+      "src": "/mnt/c/Users/Leonhard Zirus/Desktop/Semester UCA/NNL - Neural Network Learning/NNL-2021-F/img/test/with_mask/12-with-mask.jpg"
+    },
+    "16-with-mask.jpg": {
+      "rectangles": [
+        [167.0, 72.0, 586.0, 702.0],
+        [325.0, 839.0, 449.0, 993.0]
+      ],
+      "rect_to_category": [3, 6],
+      "dst": 1,
+      "src": "/mnt/c/Users/Leonhard Zirus/Desktop/Semester UCA/NNL - Neural Network Learning/NNL-2021-F/img/test/with_mask/16-with-mask.jpg"
+    },
+    "27-with-mask.jpg": {
+      "rectangles": [
+        [158.0, 590.0, 599.0, 842.0],
+        [199.0, 419.0, 600.0, 524.0]
+      ],
+      "rect_to_category": [1, 2],
+      "dst": 1,
+      "src": "/mnt/c/Users/Leonhard Zirus/Desktop/Semester UCA/NNL - Neural Network Learning/NNL-2021-F/img/test/with_mask/27-with-mask.jpg"
+    },
+    "33-with-mask.jpg": {
+      "rectangles": [[328.0, 338.0, 822.0, 507.0]],
+      "rect_to_category": [7],
+      "dst": 1,
+      "src": "/mnt/c/Users/Leonhard Zirus/Desktop/Semester UCA/NNL - Neural Network Learning/NNL-2021-F/img/test/with_mask/33-with-mask.jpg"
+    },
+    "35-with-mask.jpg": {
+      "rectangles": [[122.0, 452.0, 674.0, 757.0]],
+      "rect_to_category": [1],
+      "dst": 1,
+      "src": "/mnt/c/Users/Leonhard Zirus/Desktop/Semester UCA/NNL - Neural Network Learning/NNL-2021-F/img/test/with_mask/35-with-mask.jpg"
+    }
+  },
+  "destinations": [
+    "None",
+    "/mnt/c/Users/Leonhard Zirus/Desktop/Semester UCA/NNL - Neural Network Learning/NNL-2021-F/img/train_processed"
+  ]
+}
