@@ -15,6 +15,8 @@ from os.path import exists
 from re import compile, split
 import traceback
 
+import pandas as pd
+
 # ======== Global variables ========
 # UI-related globals
 root = Tk()
@@ -88,8 +90,9 @@ class Window(Frame):
         categoryMenu.add_separator()
         categoryMenu.add_command(label="Import", command=importCategories)
         categoryMenu.add_command(label="Export", command=exportCategories)
-        # TODO: csv support for file export
+
         categoryMenu.add_command(label="Export Categories as CSV", command=exportCSV)
+        categoryMenu.add_command(label="Export Categories as XLSX", command=exportXLSX)
         # TODO: add fileformat support
 
     # create PopUp-Window and wait for user
@@ -401,6 +404,17 @@ def exportCSV():
         writer.writerow(categories)
     return
 
+def exportXLSX():
+    # Writing to csv file
+    df = pd.Series(categories)
+
+    with open(select_file(True, "xlsx", "categories.xlsx", title='Save Categories as XLSX', initialdir='~/categories.xlsx'), "w") as outfile:
+        
+        #writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
+        df.to_excel("C://Users/Julie/OneDrive/Bilder/categories.xlsx")
+        #writer.save()
+    return
+
 
 def save_annos():
     global images
@@ -660,6 +674,12 @@ def select_file(save, type, inifile='', title='Open a file', initialdir='~/info_
     elif type == "csv":
         filetypes = (
             ('csv files', '*.csv'),
+            ('All files', '*.*')
+        )
+
+    elif type == "xlsx":
+        filetypes = (
+            ('xls files', '*.xlsx'),
             ('All files', '*.*')
         )
 
