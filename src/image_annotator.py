@@ -41,6 +41,9 @@ dest_paths = ["None"]
 act_src = ""
 act_dst = 0
 
+# need for some errors with flipped pictures
+flipped = False
+
 # Config
 DEBUG = True
 
@@ -657,7 +660,7 @@ def crop_and_save():
             #cropped = image[int(bounds[1]):(int(bounds[1])+length), int(bounds[0]):(int(bounds[0])+length)]
             #cropped = image.crop((bounds[1], length, bounds[0], length))
             #cropped = image.crop((bounds[1], bounds[0], bounds[1]+length, bounds[0]+length))
-            image = image.rotate(180)
+            if flipped: image = image.rotate(180)
             cropped = image.crop((left, up, right, bottom))
             
             cat = categories[images[img]["rect_to_category"][i]]
