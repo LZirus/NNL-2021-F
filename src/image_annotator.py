@@ -75,6 +75,8 @@ class Window(Frame):
         fileMenu.add_command(label="Change this Save-Location", command=change_dst)
         fileMenu.add_command(label="Replace all Save-Locations", command=replace_dst)
         fileMenu.add_separator()
+        fileMenu.add_command(label="Crop & Save", command=crop_and_save)
+        fileMenu.add_separator()
         fileMenu.add_command(label="Exit", command=self.exitProgram)
         
         # -> annotation menu
@@ -618,7 +620,59 @@ def next_image():
     # get path of next image and open it
     next = os.path.join(dir,imgs[i+1])
     select_image(next)
+    
+def crop_and_save():
+    save_path = "/mnt/c/Users/Leonhard Zirus/Desktop/Semester UCA/NNL - Neural Network Learning/NNL-2021-F/img"
+    save_path = fd.askdirectory();
+    
+    for img in images :
+        path = images[img]["src"]
+        if not path :
+            continue
+        
+        image = Image.open(path)
+        #image = cv2.imread(path)
+        
+        #asp_rat = image.shape[0] / image.shape[1]
+        asp_rat = image.width / image.height
+        
+        image = image.resize((int(asp_rat*size), size), Image.ANTIALIAS)
+        #image = cv2.resize(image, (size, (int(asp_rat*size))), interpolation= cv2.INTER_LINEAR)
+        
+        for rect in images[img]["rectangles"]:
+            i = images[img]["rectangles"].index(rect)
+            bounds = rect.bounds
 
+            width = int(bounds[3] - bounds[1])
+            height = int(bounds[2] - bounds[0])
+            length = max(height, width)
+            diff = (length - min(height, width))/2
+            
+            left = bounds[0] - diff if height > width else bounds[0]
+            up = bounds[1] if height > width else bounds[1] - diff
+            right = bounds[0] + length - diff if height > width else bounds[0] + length
+            bottom = bounds[1] + length if height > width else bounds[1] + length - diff
+            
+
+            #cropped = image[int(bounds[1]):(int(bounds[1])+length), int(bounds[0]):(int(bounds[0])+length)]
+            #cropped = image.crop((bounds[1], length, bounds[0], length))
+            #cropped = image.crop((bounds[1], bounds[0], bounds[1]+length, bounds[0]+length))
+            image = image.rotate(180)
+            cropped = image.crop((left, up, right, bottom))
+            
+            cat = categories[images[img]["rect_to_category"][i]]
+            
+            if not os.path.exists(save_path+os.sep+cat):
+                os.makedirs(save_path+os.sep+cat)
+            
+            #if cropped.size > 0 : 
+            if cropped :
+                #cropped = cv2.resize(cropped, (240, 240), cv2.INTER_LINEAR)
+                #cropped = cropped.resize((240, 240), Image.ANTIALIAS)
+                
+                #cv2.imwrite(save_path+os.sep+categories[images[img]["rect_to_category"][i]]+os.sep+img+"_"+str(bounds)+".png", cropped, [int(cv2.IMWRITE_PNG_COMPRESSION), None])
+                cropped.save(save_path+os.sep+cat+os.sep+img+"_"+str(bounds)+".png", "PNG")
+    print("done exporting")
 
 # Inspired by https://www.pyimagesearch.com/2016/05/23/opencv-with-tkinter/
 # loads image and edits the size
@@ -702,15 +756,16 @@ def select_image(path=None):
         else:
             # if images was not processed yet destination-path must be specified
             check_save = True
-         
+        
         # if the image was not saved yet, the destination path must be updated
         if check_save :
             # get save-path from popup
             try:
+                raise Exception
                 window.popup("Select destination path:", 'dst')
                 dst = window.entryValue()
             except Exception:
-                print(traceback.format_exc())
+                #print(traceback.format_exc())
                 dst = 'None'
 
             # update working variable

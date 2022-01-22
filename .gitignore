@@ -404,3 +404,6 @@ TSWLatexianTemp*
 
 # Makeindex log files
 *.lpz
+
+# images
+img/**
