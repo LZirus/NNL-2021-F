@@ -1,0 +1,65 @@
+
+\section{Project - Description}
+
+This project was conducted in context of a university course at Université Côte
+d'Azur in Nice, France. The main goal of the project was a first experimentation
+with the concept of machine learning with neural networks. It's purpose was to
+gain a deeper understanding of what influences the decisions of such a model and
+using the gained knowledge to create a simple, but fully functioning
+face-mask-detector.
+\newline
+The project was split into two parts, the data collection and preparation and
+the machine learning (ML) model creation and training. In the following both
+parts will be outlined with a introduction of the team members and their roles
+in both parts.
+
+\subsection{Part I - Data Collection and Preparation}
+
+The data collection is already a big part of the project, as there are a lot of
+things that can go wrong here. The data is the main thing that influences the
+final model in the decision it makes. A ML model is in this context not
+different than humans, as it can only act on its own experience. Therefore
+making sure the data is chosen in conjunction with the final goals is essential.
+As the scale of this project is fairly small and its purpose is a first
+experimentation with the concept, it was sufficient to expect the the model to
+recognize the three members of this project.
+\newline
+The collected data will most likely not be in a format, that is easily readable
+for our model. The next step therefore needs to manually interpret the data,
+label it for the model and standardize it. The level of the data preprocessing
+again is determined by the goal one wants to achieve. In the scale of this
+project, our preprocessing will go as far as already identifying the face on the
+image, cutting it to a good fitting square and giving it a label according to
+its context.
+To achieve all that in a streamlined, standardized and user friendly way, the
+development of an image annotation software was necessary. In addition to the
+manual annotation we some automation tricks to help us with easy classifiable
+data. 
+
+\subsection{Part II - Machine Learning Model}
+
+This of course is the center of the project. Setting up and compiling a ML
+model, that is capable of taking an image of a face and determining whether the
+person shown is wearing a mask and what kind if yes.
+\newline
+As mentioned before, we limited our goal to being able to detect mask on the
+faces of our team members, as we would have needed a much larger and more
+diverse dataset to achieve more than that. 
+...
+
+\subsection{Team Members and Roles}
+
+The team consists of three members, Michael Cegielka, Julien Schulz and Leonhard
+Zirus. The roles in this project where distributed equally in a way where
+everyone was still involved in every part of it. In the first part of the
+project, Leonhard took charge of the annotation software, being responsible for
+the organization and collaboration. He created the framework and interfaces.
+Julien as our ML expert was responsible for making sure that the software was
+usable in the second part of the project and created a streamlined process for
+the creation of the dataset, augmentation and later labeling. Micheal was mainly
+in charge of the UI (User Interface) and UE (User Experience) of the annotation
+software.
+In the 
+TODO: Part II
+TODO: Who coded
+TODO: Who wrote the paper

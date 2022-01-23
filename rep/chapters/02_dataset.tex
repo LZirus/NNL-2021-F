@@ -1,0 +1,52 @@
+\section{Dataset}
+
+The used dataset was created by taking pictures of our team members wearing
+different kinds of masks. For the ML model to use the images they need to be
+preprocessed and labeled to enable the learning process.
+
+\subsection{Image Creation}
+
+The images taken will influence greatly what kind of images the model will later
+be able to recognize. This means, that lighting, orientation of the face,
+background, clothing or other kinds of patterns are very important to be aware
+of when creating taking the pictures. 
+\newline
+Imagine a person choses to never wear a bonnet when walking inside, but because
+of corona, that is exactly when he/she always wears a mask. As it is winter, the
+opposite is true for being outside, he/she wears a bonnet, as it is cold, but no
+mask, because it is outside and not required. Now using pictures from these
+situations, the model might turn to identifying whether the person is wearing a
+bonnet instead, as the dataset reflects such an implication. This is just one of
+many examples, of unwilling implications that might turn up in a dataset.
+\newline
+In order to make sure to not have any such implications the images were tried to
+create, using equal distributions of different backgrounds, with no lighting
+differences correlating to the wearing or not wearing of a mask and different
+clothing styles not related to the mask. The later one was limited to wearing a
+bonnet or not.
+\newline
+The limitation of time and equipment will surely create a few problems with the
+dataset. As an example, the creation started in the evening, which in turn
+changed the lighting between changing to a different mask. As this problem
+became aware, the fotoshoot was moved inside to at least have similar lighting
+throughout all the pictures.
+\newline
+The improvements to the creation are countless, but would have all not been
+justified by the dimension of this project. To create a proper one, the
+diversity of the people, lighting, backgrounds, clothing, camera-lenses, etc.
+would all have to be greatly increased. Also the number of images created is
+still very small for the model to accurately recognize anyone, anywhere we put
+them in front of the camera. In the end the created dataset should have
+sufficient diversity to serve the purpose of this project.
+
+\subsection{Scaling, Labeling and Formatting}
+
+With the base for the dataset created, it is time to pre-process the images into
+a format that can be used for the model. The final images should have a square
+format with 240 x 240 pixels saved in a folder specifying it's label. There are
+four labels: "no\_mask", "ffp2", "op\_mask" and "other\_mask". In this case
+"other\_mask" will be different kinds of cloth-masks.
+\newline
+The image annotator
+...
+As the dataset started out with over 500 images, 
