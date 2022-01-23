@@ -31,10 +31,11 @@ again is determined by the goal one wants to achieve. In the scale of this
 project, our preprocessing will go as far as already identifying the face on the
 image, cutting it to a good fitting square and giving it a label according to
 its context.
+\newline
 To achieve all that in a streamlined, standardized and user friendly way, the
 development of an image annotation software was necessary. In addition to the
-manual annotation we some automation tricks to help us with easy classifiable
-data. 
+manual annotation there are some automation tricks that can be used to help with
+easy classifiable data. 
 
 \subsection{Part II - Machine Learning Model}
 
@@ -42,24 +43,28 @@ This of course is the center of the project. Setting up and compiling a ML
 model, that is capable of taking an image of a face and determining whether the
 person shown is wearing a mask and what kind if yes.
 \newline
-As mentioned before, we limited our goal to being able to detect mask on the
-faces of our team members, as we would have needed a much larger and more
-diverse dataset to achieve more than that. 
-...
+As mentioned before, the goal was limited to being able to detect masks on the
+faces of the team members of this project, as we would have needed a much larger
+and more diverse dataset to achieve reliable results with all other faces. Still
+the hope is, that the model will be able to identify more faces, that have
+similarities to the team members. This will most likely include white, western
+men, while there will be difficulties with different skin colors and facial
+structures.
 
 \subsection{Team Members and Roles}
 
 The team consists of three members, Michael Cegielka, Julien Schulz and Leonhard
 Zirus. The roles in this project where distributed equally in a way where
-everyone was still involved in every part of it. In the first part of the
-project, Leonhard took charge of the annotation software, being responsible for
-the organization and collaboration. He created the framework and interfaces.
-Julien as our ML expert was responsible for making sure that the software was
-usable in the second part of the project and created a streamlined process for
-the creation of the dataset, augmentation and later labeling. Micheal was mainly
-in charge of the UI (User Interface) and UE (User Experience) of the annotation
-software.
-In the 
-TODO: Part II
+everyone was still involved in every part of it. 
+\newline
+In the first part of the project, Leonhard took charge of the annotation
+software, being responsible for the organization and collaboration. He created
+the framework and interfaces. Julien as our ML expert was responsible for making
+sure that the software was usable in the second part of the project and created
+a streamlined process for the creation of the dataset, augmentation and later
+labeling. Micheal was mainly in charge of the UI (User Interface) and UE (User
+Experience) of the annotation software. 
+\newline
+TODO: Part II 
 TODO: Who coded
 TODO: Who wrote the paper
