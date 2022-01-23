@@ -7,4 +7,35 @@ difficulties.
 
 \subsection{Image-Annotator}
 
+The purpose of the image annotation software is to give an easy possibility of
+labeling, rescaling, cropping and saving images in order to be used as dataset
+by the ML model.
+\newline
+The software was completely written in python, an interpreted script language.
+Still python has object oriented features, that where partly used in this
+project. 
+\newline
+The program program is structured in a way, to have two different classes,
+"Window" and "popupWindow" to take care of the UI part of the project. The rest
+of the functionality is structured into script-like functions. This structuring
+makes it easier to split the program into smaller tasks that can be distributed
+and worked on individually. This is a methodology oriented at the MVC (Model
+View Controller) software development pattern. The UI is here clearly separated
+from the controlling instance, that handles the backend of user interaction as
+well as the model, which is responsible for data storage and maintenance. As
+this is a simple single instance application, of course a detailed
+implementation was not necessary and the model and controller are somewhat mixed
+and both just represented as the separate functions. Still it gives the
+possibility of separating the implementation of the UI, the backend and the
+storage system.
+\newline
+The UI is handled by the the tkinter python library, which gives a lot of basic
+functionality to easily implement the frontend of the application. The UI of
+this project was mainly focused on the menu bar on top in addition to a right
+click menu. This choice was made in order to keep the overall frame clean and
+focused on the most important thing, the image.
+\newline
+All created data
+
+
 \subsection{Machine Learning Model}

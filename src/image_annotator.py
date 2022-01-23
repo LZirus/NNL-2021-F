@@ -41,7 +41,7 @@ dest_paths = ["None"]
 act_src = ""
 act_dst = 0
 
-# need for some errors with flipped pictures
+# needed for some errors with flipped pictures
 flipped = False
 
 # Config
@@ -675,7 +675,7 @@ def crop_and_save():
                 
                 #cv2.imwrite(save_path+os.sep+categories[images[img]["rect_to_category"][i]]+os.sep+img+"_"+str(bounds)+".png", cropped, [int(cv2.IMWRITE_PNG_COMPRESSION), None])
                 cropped.save(save_path+os.sep+cat+os.sep+img+"_"+str(bounds)+".png", "PNG")
-    print("done exporting")
+    if DEBUG : print("done exporting")
 
 # Inspired by https://www.pyimagesearch.com/2016/05/23/opencv-with-tkinter/
 # loads image and edits the size
@@ -764,11 +764,10 @@ def select_image(path=None):
         if check_save :
             # get save-path from popup
             try:
-                raise Exception
+                raise Exception # in the final use case this functionality was not needed
                 window.popup("Select destination path:", 'dst')
                 dst = window.entryValue()
             except Exception:
-                #print(traceback.format_exc())
                 dst = 'None'
 
             # update working variable
@@ -1037,7 +1036,7 @@ def double_click(event):
                 rect_to_category[rectangles.index(
                     rect)] = categories.index(cat)
             except:
-                print("no selection")
+                if DEBUG: print("no selection")
 
             # change color back to normal
             draw_rectangle((bounds[0], bounds[1]),
