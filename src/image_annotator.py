@@ -40,7 +40,7 @@ images = {}
 active_name = ""
 rectangles = []
 rect_to_category = []
-categories = ["None", "mask", "no mask"]
+categories = ["None", "mask", "no_mask", "op_mask", "ffp2"]
 dest_paths = ["None"]
 act_src = ""
 act_dst = 0
@@ -126,6 +126,9 @@ class Window(Frame):
     def popup_select(self, text, type, rect, i):
         self.w = popupWindow(self.master, text, type, rect, i)
         self.master.wait_window(self.w.top)
+    
+    def popup_stdout(self):
+        self.w = popupWindow(self.master, "text", "stdout")
 
     # get return values from PopUp if only one value needed
     def entryValue(self):
@@ -166,6 +169,20 @@ class popupWindow(object):
             self.pathSelect(top, text)
         elif type == "rep":
             self.pathReplace(top, text)
+        elif type == "stdout":
+            self.stdout_stuff(top)
+
+    def stdout_stuff(self, top):
+        top.wm_title("Output")
+        top.geometry(str(int((16/9)*500))+"x"+str(500))
+        
+        text = ScrolledText(top)
+        text.pack(expand=True, fill='both')
+        
+        # redirect stdout
+        redir = RedirectText(text)
+        sys.stdout = redir
+        redir.write("This will take a while\r")
 
     # Single Text-Input Popup
     def oneInput(self, top, intext):
@@ -426,30 +443,38 @@ from tkinter.scrolledtext import ScrolledText
 import sys
 
 ml_model = None
+labels = None
+ml_size = None
 
 def trainModel():
-    global ml_model
+    global ml_model, labels, ml_size
     
-    ml_model = mask_classifier.basic_model
+    ml_model, ml_size = mask_classifier.select_model("basic_model")
     epochs = 10
-    
-    text = ScrolledText(root)
-    text.pack()
-
-    # redirect stdout
-    redir = RedirectText(text)
-    sys.stdout = redir
+        
+    window.popup_stdout()
     
     train_ds, val_ds, labels, y_test, x_test = mask_classifier.load_dataset(imgs_path=fd.askdirectory())
     mask_classifier.train_model(ml_model, train_ds, val_ds)
+    
+    sys.stdout = sys.__stdout__
     return
 
 def loadModel():
-    global ml_model
-    if not ml_model:
-        return
+    global ml_model, labels, ml_size
     
-    ml_model = mask_classifier.load_model(select_file(False, "ml", "model.h5", title='Load ML Model'))
+    path = select_file(False, "ml", "model.h5", title='Load ML Model')
+    
+    with open(path+"_labels.csv", 'r') as openfile:
+        data = list(csv.reader(openfile))
+        labels = data[0]
+        ml_size = (int(data[1][0]),int(data[1][1]))
+    ml_model = mask_classifier.load_model_good(path)
+    
+    if DEBUG: print(ml_model)
+    if DEBUG: print(labels)
+    if DEBUG: print(ml_size)
+    
     return
 
 def saveModel():
@@ -457,10 +482,18 @@ def saveModel():
     if not ml_model:
         return
     
-    mask_classifier.save_model(select_file(True, "ml", "model.h5", title='Save ML Model'))
+    path = select_file(True, "ml", "model.h5", title='Save ML Model')
+    
+    with open(path+"_labels.csv", "w") as outfile:
+        writer = csv.writer(outfile)
+        writer.writerow(labels)
+        writer.writerow([ml_size[0], ml_size[1]])
+    
+    mask_classifier.save_model(path, ml_model)
     return
 
 def classifyImage():
+    global ml_model, ml_size
     if not ml_model:
         return
     
@@ -472,22 +505,31 @@ def classifyImage():
             continue
         
         bounds = rect.bounds
+        if DEBUG: print(bounds)
 
-        width = int(bounds[3] - bounds[1])
-        height = int(bounds[2] - bounds[0])
+        height = int(bounds[3] - bounds[1])
+        width = int(bounds[2] - bounds[0])
         length = max(height, width)
         diff = (length - min(height, width))/2
         
-        left = bounds[0] - diff if height > width else bounds[0]
-        up = bounds[1] if height > width else bounds[1] - diff
-        right = bounds[0] + length - diff if height > width else bounds[0] + length
-        bottom = bounds[1] + length if height > width else bounds[1] + length - diff
+        left = (bounds[0] - diff) if height > width else bounds[0]
+        up = bounds[1] if height > width else (bounds[1] - diff)
+        right = (bounds[0] - diff) + length if height > width else (bounds[0] + length)
+        bottom = (bounds[1] + length) if height > width else ((bounds[1] - diff) + length )
         
-        cropped = image.crop((left, up, right, bottom))
-        cropped = cropped.resize((180, 180), Image.ANTIALIAS)
+        cropped = image_clean.crop((left, up, right, bottom))
+        cropped = cropped.resize(ml_size, Image.ANTIALIAS)
         # img_arr = np.array(cropped)
         # img_cv = cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR)
 
+        cropped.save("act_img.png", "PNG")
+        label = mask_classifier.predict('category', img_path="act_img.png", model=ml_model, labels=labels, img_size=ml_size)
+        
+        if DEBUG: print(label)
+        rect_to_category[i] = categories.index(label)
+        messagebox.showinfo('Result',str(bounds)+':\nClassified with '+label+"\nLabel was updated")
+        #os.remove("act_img.png")
+        
         # call classify with img_cv image
 
 def liveClassify():
@@ -497,17 +539,29 @@ def liveClassify():
     mask_classifier.predict('live_detection', model=ml_model)
     return
 
+# https://www.blog.pythonlibrary.org/2014/07/14/tkinter-redirecting-stdout-stderr/
 class RedirectText(object):
     """"""
     #----------------------------------------------------------------------
     def __init__(self, text_ctrl):
         """Constructor"""
         self.output = text_ctrl
+        self.text = ""
         
     #----------------------------------------------------------------------
     def write(self, string):
         """"""
-        self.output.insert(END, string)
+        for c in string:
+            if c == "\r":
+                self.output.insert(END, self.text)
+                self.text = ""
+            if c != "\b":
+                self.text = self.text + c
+        self.output.insert(END, self.text)
+        self.text = ""
+    
+    def flush(self):
+        return
 
 # ==============================================
 
@@ -902,7 +956,7 @@ def select_file(save, type, inifile='', title='Open a file', initialdir='~/info_
     )
     if type == "img":
         filetypes = (
-            ('img files', '*.jpg *.png *.JPEG', '*.JPG'),
+            ('img files', '*.jpg *.png *.JPEG'),
             ('All files', '*.*')
         )
     elif type == "json":

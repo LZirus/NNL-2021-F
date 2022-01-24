@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import numpy as np
 import matplotlib.pyplot as plt
-from tensorflow.keras.layers import MaxPool2D, Conv2D, Input, Dense, Flatten, AveragePooling2D, Dropout
+from tensorflow.keras.layers import MaxPool2D, Conv2D, Input, Dense, Flatten, AveragePooling2D, Dropout, MaxPooling2D
 import tensorflow.keras.layers as lays
 from tensorflow.keras.layers.experimental.preprocessing import Rescaling, RandomContrast, RandomFlip, RandomRotation
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -35,14 +35,14 @@ def select_model(model_name, **kwargs):
     num_labels = kwargs.get('num_classes', num_classes)
 
     basic_model = Sequential([ 
-    Rescaling(1. /255),
-    augmentation,
-    Conv2D(32, (3,3), activation='relu'),
-    AveragePooling2D(pool_size=(7,7)),
-    Flatten(name="flatten"),
-    Dense(128, activation="relu"),
-    Dropout(0.5),#drops small confidences
-    Dense(num_labels, activation="softmax")
+        Rescaling(1. /255),
+        #augmentation,
+        Conv2D(32, (3,3), activation='relu'),
+        AveragePooling2D(pool_size=(7,7)),
+        Flatten(name="flatten"),
+        Dense(128, activation="relu"),
+        Dropout(0.5),#drops small confidences
+        Dense(num_labels, activation="softmax")
     ])
 
     small_model = Sequential([ 
@@ -98,16 +98,16 @@ def select_model(model_name, **kwargs):
     ])
 
     if model_name == 'basic_model':
-        return basic_model
+        return basic_model, (180,180)
     
     if model_name == 'small_model':
-        return small_model
+        return small_model, (180,180)
 
     if model_name == 'vgg_model':
-        return vgg_model
+        return vgg_model, (180,180)
     
     if model_name == 'vgg_small_model':
-        return vgg_small_model
+        return vgg_small_model, (224,224)
 
 ##FaceNet
 
@@ -165,7 +165,7 @@ def evaluate_model(x_test, y_test, model):
 def save_model(path, model):
     model.save(path, save_format="h5")
 
-def load_model(path):
+def load_model_good(path):
     return models.load_model(path)
 
 def load_model(**kwargs):
@@ -176,14 +176,19 @@ def load_model(**kwargs):
 
 def maskPredict(model, img, labels):
     pred = model.predict(img[None])
+    print(pred)
     label_index = np.argmax(pred)
+    print(label_index)
     return labels[label_index], pred[0][label_index]
 
 
 #mode can be 'category', 'probabilities', 'detection', 'live_detection'
 def predict(mode, **kwargs):
     img_path = kwargs.get('img_path', None)
-    model = kwargs.get('model', load_model())
+    model = kwargs.get('model')
+    labels = kwargs.get('labels', None)
+    size = kwargs.get('img_size', img_size)
+    
     if mode=='live_detection':
         live_det()
         return
@@ -193,7 +198,7 @@ def predict(mode, **kwargs):
         return
 
     #load_img
-    img = load_img(img_path, target_size = img_size)
+    img = load_img(img_path, target_size = size)
     img = img_to_array(img)
     
     if mode=='detection':
@@ -203,7 +208,7 @@ def predict(mode, **kwargs):
         return
         
     if mode=='category':
-        label, confidence = maskPredict(img)
+        label, confidence = maskPredict(model, img, labels)
         return label
         
     if mode=='probabilities':
