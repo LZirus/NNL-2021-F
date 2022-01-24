@@ -11,6 +11,7 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow.keras import Sequential, losses as lfs
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import models
 import keras_tuner as kt
 from tensorflow.keras.callbacks import ModelCheckpoint
 
@@ -145,6 +146,12 @@ def evaluate_model(x_test, y_test, model):
     y_pred_confidences = model.predict(x_test)
     y_pred = [np.argmax(cs) for cs in y_pred_confidences]
     print(classification_report(y_test, y_pred))
+
+def save_model(path, model):
+    model.save(path, save_format="h5")
+
+def load_model(path):
+    return models.load_model(path)
 
 def load_model(**kwargs):
     checkpoint_path = kwargs.get('checkpoint_path', "mask_model/weights.ckpt")

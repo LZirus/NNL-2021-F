@@ -18,6 +18,9 @@ import traceback
 import pandas as pd
 import numpy as np
 
+# import other self-writen script: mask_classifier.py
+import mask_classifier
+
 # ======== Global variables ========
 # UI-related globals
 root = Tk()
@@ -419,16 +422,47 @@ class popupWindow(object):
 
 # ========== Link to Machine Learning ==========
 
+from tkinter.scrolledtext import ScrolledText
+import sys
+
+ml_model = None
+
 def trainModel():
+    global ml_model
+    
+    ml_model = mask_classifier.basic_model
+    epochs = 10
+    
+    text = ScrolledText(root)
+    text.pack()
+
+    # redirect stdout
+    redir = RedirectText(text)
+    sys.stdout = redir
+    
+    train_ds, val_ds, labels, y_test, x_test = mask_classifier.load_dataset(imgs_path=fd.askdirectory())
+    mask_classifier.train_model(ml_model, train_ds, val_ds)
     return
 
 def loadModel():
+    global ml_model
+    if not ml_model:
+        return
+    
+    ml_model = mask_classifier.load_model(select_file(False, "ml", "model.h5", title='Load ML Model'))
     return
 
 def saveModel():
+    global ml_model
+    if not ml_model:
+        return
+    
+    mask_classifier.save_model(select_file(True, "ml", "model.h5", title='Save ML Model'))
     return
 
 def classifyImage():
+    if not ml_model:
+        return
     
     for rect in rectangles:
         i = rectangles.index(rect)
@@ -451,14 +485,29 @@ def classifyImage():
         
         cropped = image.crop((left, up, right, bottom))
         cropped = cropped.resize((180, 180), Image.ANTIALIAS)
-        img_arr = np.array(cropped)
-        img_cv = cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR)
+        # img_arr = np.array(cropped)
+        # img_cv = cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR)
 
         # call classify with img_cv image
 
 def liveClassify():
+    if not ml_model:
+        return
     # call live classify
+    mask_classifier.predict('live_detection', model=ml_model)
     return
+
+class RedirectText(object):
+    """"""
+    #----------------------------------------------------------------------
+    def __init__(self, text_ctrl):
+        """Constructor"""
+        self.output = text_ctrl
+        
+    #----------------------------------------------------------------------
+    def write(self, string):
+        """"""
+        self.output.insert(END, string)
 
 # ==============================================
 
@@ -867,6 +916,11 @@ def select_file(save, type, inifile='', title='Open a file', initialdir='~/info_
     elif type == "csv":
         filetypes = (
             ('csv files', '*.csv'),
+            ('All files', '*.*')
+        )
+    elif type == "ml":
+        filetypes = (
+            ('h5 files', '*.h5 *.*'),
             ('All files', '*.*')
         )
 
