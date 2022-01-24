@@ -96,3 +96,47 @@ in an by the user specified location.
 
 \subsection{Machine Learning Model}
 
+The Classifier is coded in python as well using the tensorflow library,
+specifically the keras API, which is one of the most used deep learning
+frameworks. In addition the OpenCV library is used again for face recognition. 
+\newline
+The overall structure on this part of the project is based on the tensorflow
+tutorials \cite{tut}. It is split up into loading and structuring the dataset,
+pre-processing the images, then training the model and finally evaluating it's
+effectiveness. In addition to that the code offers interfaces for using the
+model to classify any kind of image, or even live-feed through a camera.
+\newline
+TODO: loading and structuring
+
+
+TODO: pre-processing
+
+
+TODO: training
+
+
+TODO: evaluating
+
+used libraries:
+- tensorflow
+- keras and keras-tuner
+- opencv
+
+structured after tensorflow tutorial
+- load data
+- pre-process
+- ...
+
+why this layer-structure 
+- rescaling -> between 0 and 1
+- augmentation -> small dataset artificially enlarged
+- convocational layer -> pattern detection
+- max-pooling
+- flattening -> for dense-layer
+- dense-layer
+- dropout -> delete low confidences
+
+Problem:
+-
+
+\lstinputlisting[language=json,firstnumber=1,breaklines,caption={reduced example of saved annotations},captionpos=b, numbers=right]{../code/model.py}
