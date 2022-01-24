@@ -1,0 +1,30 @@
+{
+  "categories": ["None","mask","no_mask","op_mask","ffp2","other_mask"],
+  "images": {
+    "IMG_1342.JPG": {
+      "rectangles": [[421.0, 144.0, 853.0, 727.0]],
+      "rect_to_category": [3],
+      "dst": 0,
+      "src": "~/NNL-2021-F/img/to_annotate/IMG_1342.JPG"
+    },
+    "IMG_1418.JPG": {
+      "rectangles": [[358.0, 92.0, 939.0, 597.0]],
+      "rect_to_category": [5],
+      "dst": 0,
+      "src": "~/NNL-2021-F/img/to_annotate/IMG_1418.JPG"
+    },
+    "IMG_1597.JPG": {
+      "rectangles": [[399.0, 94.0, 1038.0, 653.0]],
+      "rect_to_category": [4],
+      "dst": 0,
+      "src": "~/NNL-2021-F/img/to_annotate/IMG_1597.JPG"
+    },
+    "IMG_1853.JPG": {
+      "rectangles": [[330.0, 137.0, 926.0, 699.0]],
+      "rect_to_category": [2],
+      "dst": 0,
+      "src": "~/NNL-2021-F/img/to_annotate/IMG_1853.JPG"
+    }
+  },
+  "destinations": ["None"]
+}

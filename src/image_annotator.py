@@ -16,6 +16,7 @@ from re import compile, split
 import traceback
 
 import pandas as pd
+import numpy as np
 
 # ======== Global variables ========
 # UI-related globals
@@ -41,7 +42,7 @@ dest_paths = ["None"]
 act_src = ""
 act_dst = 0
 
-# need for some errors with flipped pictures
+# needed for some errors with flipped pictures
 flipped = False
 
 # Config
@@ -69,6 +70,11 @@ class Window(Frame):
 
         categoryMenu = Menu(menu, tearoff=0)
         menu.add_cascade(label="Categories", menu=categoryMenu)
+        
+        learningMenu = Menu(menu, tearoff=0)
+        menu.add_cascade(label="Machine Learning", menu=learningMenu)
+        
+        modelMenu = Menu(learningMenu, tearoff=0)
 
         # add all menu-elements and bind functions to buttons
         # -> file menu for opening Images and maintaining save-locations of processed images
@@ -77,8 +83,6 @@ class Window(Frame):
         fileMenu.add_separator()
         fileMenu.add_command(label="Change this Save-Location", command=change_dst)
         fileMenu.add_command(label="Replace all Save-Locations", command=replace_dst)
-        fileMenu.add_separator()
-        fileMenu.add_command(label="Crop & Save", command=crop_and_save)
         fileMenu.add_separator()
         fileMenu.add_command(label="Exit", command=self.exitProgram)
         
@@ -94,12 +98,22 @@ class Window(Frame):
         categoryMenu.add_command(label="Show All", command=listCategories)
         categoryMenu.add_separator()
         categoryMenu.add_command(label="Import", command=importCategories)
-        categoryMenu.add_command(label="Export", command=exportCategories)
-
+        categoryMenu.add_command(label="Export Categories as JSON", command=exportCategories)
         categoryMenu.add_command(label="Export Categories as CSV", command=exportCSV)
         categoryMenu.add_command(label="Export Categories as XLSX", command=exportXLSX)
-        # TODO: add fileformat support
-
+        
+        # -> machine learning menu
+        learningMenu.add_command(label="Crop & Save Dataset", command=crop_and_save)
+        
+        modelMenu.add_command(label="Train model", command=trainModel)
+        modelMenu.add_command(label="Load model", command=loadModel)
+        modelMenu.add_command(label="Save model", command=saveModel)
+        
+        learningMenu.add_cascade(label="ML Model", menu=modelMenu)
+        learningMenu.add_command(label="Classify current Image", command=classifyImage)
+        learningMenu.add_command(label="Open Live-Classifier", command=liveClassify)
+        
+        
     # create PopUp-Window and wait for user
     def popup(self, text, type):
         self.w = popupWindow(self.master, text, type)
@@ -403,6 +417,51 @@ class popupWindow(object):
         # destroy popup
         self.top.destroy()
 
+# ========== Link to Machine Learning ==========
+
+def trainModel():
+    return
+
+def loadModel():
+    return
+
+def saveModel():
+    return
+
+def classifyImage():
+    
+    for rect in rectangles:
+        i = rectangles.index(rect)
+        cat = categories[rect_to_category[i]]
+        
+        if cat != "None":
+            continue
+        
+        bounds = rect.bounds
+
+        width = int(bounds[3] - bounds[1])
+        height = int(bounds[2] - bounds[0])
+        length = max(height, width)
+        diff = (length - min(height, width))/2
+        
+        left = bounds[0] - diff if height > width else bounds[0]
+        up = bounds[1] if height > width else bounds[1] - diff
+        right = bounds[0] + length - diff if height > width else bounds[0] + length
+        bottom = bounds[1] + length if height > width else bounds[1] + length - diff
+        
+        cropped = image.crop((left, up, right, bottom))
+        cropped = cropped.resize((180, 180), Image.ANTIALIAS)
+        img_arr = np.array(cropped)
+        img_cv = cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR)
+
+        # call classify with img_cv image
+
+def liveClassify():
+    # call live classify
+    return
+
+# ==============================================
+
 
 # fire PopUp to add a Category
 def addCategory():
@@ -671,11 +730,11 @@ def crop_and_save():
             #if cropped.size > 0 : 
             if cropped :
                 #cropped = cv2.resize(cropped, (240, 240), cv2.INTER_LINEAR)
-                #cropped = cropped.resize((240, 240), Image.ANTIALIAS)
+                cropped = cropped.resize((240, 240), Image.ANTIALIAS)
                 
                 #cv2.imwrite(save_path+os.sep+categories[images[img]["rect_to_category"][i]]+os.sep+img+"_"+str(bounds)+".png", cropped, [int(cv2.IMWRITE_PNG_COMPRESSION), None])
                 cropped.save(save_path+os.sep+cat+os.sep+img+"_"+str(bounds)+".png", "PNG")
-    print("done exporting")
+    if DEBUG : print("done exporting")
 
 # Inspired by https://www.pyimagesearch.com/2016/05/23/opencv-with-tkinter/
 # loads image and edits the size
@@ -764,11 +823,10 @@ def select_image(path=None):
         if check_save :
             # get save-path from popup
             try:
-                raise Exception
+                raise Exception # in the final use case this functionality was not needed
                 window.popup("Select destination path:", 'dst')
                 dst = window.entryValue()
             except Exception:
-                #print(traceback.format_exc())
                 dst = 'None'
 
             # update working variable
@@ -795,7 +853,7 @@ def select_file(save, type, inifile='', title='Open a file', initialdir='~/info_
     )
     if type == "img":
         filetypes = (
-            ('img files', '*.jpg *.png *.JPEG'),
+            ('img files', '*.jpg *.png *.JPEG', '*.JPG'),
             ('All files', '*.*')
         )
     elif type == "json":
@@ -1037,7 +1095,7 @@ def double_click(event):
                 rect_to_category[rectangles.index(
                     rect)] = categories.index(cat)
             except:
-                print("no selection")
+                if DEBUG: print("no selection")
 
             # change color back to normal
             draw_rectangle((bounds[0], bounds[1]),
