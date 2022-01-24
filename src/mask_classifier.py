@@ -31,7 +31,10 @@ num_classes = 2
 
 correct_usage=  'correct usage: \n' + 'predict([path to image], \'category\' \n' + 'predict([path to image], \'probabilities\' \n' + 'predict([path to image], \'detection\' \n' + 'predict(\'live_detection\')'
 
-basic_model = Sequential([ 
+def select_model(model_name, **kwargs):
+    num_labels = kwargs.get('num_classes', num_classes)
+
+    basic_model = Sequential([ 
     Rescaling(1. /255),
     augmentation,
     Conv2D(32, (3,3), activation='relu'),
@@ -39,60 +42,72 @@ basic_model = Sequential([
     Flatten(name="flatten"),
     Dense(128, activation="relu"),
     Dropout(0.5),#drops small confidences
-    Dense(num_classes, activation="softmax")
+    Dense(num_labels, activation="softmax")
     ])
 
-small_model = Sequential([ 
-    Rescaling(1. /255),
-    augmentation,
-    Conv2D(filters=128, kernel_size=(5,5), activation='relu'),
-    Conv2D(filters=128, kernel_size=(5,5), activation='relu'),
-    MaxPool2D(pool_size=(3,3)),
-    Flatten(name="flatten"),
-    Dense(units=224, activation="relu"),
-    Dropout(0.5),#drops small confidences
-    Dense(num_classes, activation="softmax")
+    small_model = Sequential([ 
+        Rescaling(1. /255),
+        augmentation,
+        Conv2D(filters=128, kernel_size=(5,5), activation='relu'),
+        Conv2D(filters=128, kernel_size=(5,5), activation='relu'),
+        MaxPool2D(pool_size=(3,3)),
+        Flatten(name="flatten"),
+        Dense(units=224, activation="relu"),
+        Dropout(0.5),#drops small confidences
+        Dense(num_labels, activation="softmax")
+        ])
+
+    vgg_small_model = Sequential([ 
+        Rescaling(1. /255),
+        Conv2D(64, (3,3), activation='relu'),
+        Conv2D(64, (3,3), activation='relu'),
+        MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
+        Conv2D(128, (3,3), activation='relu'),
+        Conv2D(128, (3,3), activation='relu'),
+        MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
+        Flatten(name="flatten"),
+        Dense(256, activation="relu"),
+        Dropout(0.5),#drops small confidences
+        Dense(num_labels, activation="softmax")
+        ])
+
+    vgg_model = Sequential([
+        Rescaling(1. /255),
+        Conv2D(input_shape=(224,224,3), filters=64, kernel_size=(3,3), padding="same", activation="relu", strides=(1,1)), 
+        Conv2D(filters=64,kernel_size=(3,3),padding="same", activation="relu"),
+        MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
+        Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"),
+        Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"),
+        MaxPool2D(pool_size=(2, 2), strides=(2)),
+        Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
+        Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
+        Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
+        MaxPool2D(pool_size=(2, 2), strides=(2)),
+        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
+        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
+        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
+        MaxPool2D(pool_size=(2, 2), strides=(2)),
+        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
+        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
+        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
+        MaxPool2D(pool_size=(2, 2), strides=(2)),
+        Flatten(),
+        Dense(units=4096, activation="relu"),
+        Dense(units=4096, activation="relu"),
+        Dense(units=num_labels, activation="softmax")
     ])
 
-vgg_small_model = Sequential([ 
-    Rescaling(1. /255),
-    Conv2D(64, (3,3), activation='relu'),
-    Conv2D(64, (3,3), activation='relu'),
-    MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
-    Conv2D(128, (3,3), activation='relu'),
-    Conv2D(128, (3,3), activation='relu'),
-    MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
-    Flatten(name="flatten"),
-    Dense(256, activation="relu"),
-    Dropout(0.5),#drops small confidences
-    Dense(num_classes, activation="softmax")
-    ])
+    if model_name == 'basic_model':
+        return basic_model
+    
+    if model_name == 'small_model':
+        return small_model
 
-vgg_model = Sequential([
-    Rescaling(1. /255),
-    Conv2D(input_shape=(224,224,3), filters=64, kernel_size=(3,3), padding="same", activation="relu", strides=(1,1)), 
-    Conv2D(filters=64,kernel_size=(3,3),padding="same", activation="relu"),
-    MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
-    Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"),
-    Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"),
-    MaxPool2D(pool_size=(2, 2), strides=(2)),
-    Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
-    Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
-    Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
-    MaxPool2D(pool_size=(2, 2), strides=(2)),
-    Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-    Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-    Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-    MaxPool2D(pool_size=(2, 2), strides=(2)),
-    Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-    Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-    Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-    MaxPool2D(pool_size=(2, 2), strides=(2)),
-    Flatten(),
-    Dense(units=4096, activation="relu"),
-    Dense(units=4096, activation="relu"),
-    Dense(units=4, activation="softmax")
-])
+    if model_name == 'vgg_model':
+        return vgg_model
+    
+    if model_name == 'vgg_small_model':
+        return vgg_small_model
 
 ##FaceNet
 
@@ -100,9 +115,9 @@ def convertImg(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 def faceNetLocalize(img, **kwargs):
-    scaleFactor = kwargs.get('scaleFactor', 1.1) #between 1.05 (quality) and 1.4 (speed) recommended (scale of the faces we search for)
-    minNeighbors = kwargs.get('minNeighbors', 4) #between 3 (quantity) and 6 (quality) recommended
-    minSize = kwargs.get('minSize', (10, 10)) #min size of a face in the picture
+    scaleFactor = kwargs.get('scaleFactor', 1.1)    #between 1.05 (quality) and 1.4 (speed) recommended (scale of the faces we search for)
+    minNeighbors = kwargs.get('minNeighbors', 4)    #between 3 (quantity) and 6 (quality) recommended
+    minSize = kwargs.get('minSize', (10, 10))       #min size of a face in the picture
     faceNet = kwargs.get('faceNet', init_faceNet())
     
     img_cvt = convertImg(img)
@@ -155,7 +170,7 @@ def load_model(path):
 
 def load_model(**kwargs):
     checkpoint_path = kwargs.get('checkpoint_path', "mask_model/weights.ckpt")
-    model = kwargs.get('model', basic_model)
+    model = kwargs.get('model', select_model('basic_model'))
     model.load_weights(checkpoint_path)
     return model
 
