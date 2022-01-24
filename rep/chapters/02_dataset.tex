@@ -47,6 +47,24 @@ format with 240 x 240 pixels saved in a folder specifying it's label. There are
 four labels: "no\_mask", "ffp2", "op\_mask" and "other\_mask". In this case
 "other\_mask" will be different kinds of cloth-masks.
 \newline
-The image annotator
-...
-As the dataset started out with over 500 images, 
+To limit the manual work as much as possible, the usage of the OpenCV
+Haar-Cascade-Classifier, which is a pre-trained algorithm to detect faces on an
+image. A short script enabled the automated loading of all images in a folder,
+computation of present faces, cropping of the face in the image and saving it in
+a new location. As the cascade classifier gives a whole lot of false positives,
+it is important to got through the exported files and delete anything that can
+not be used. To help figure out which image was already correctly processed,
+there is a second small script comparing the processed images to the raw images
+and copying all unprocessed ones to a new folder, ready to be manually
+annotated. 
+\newline
+The labeling process of course can't be automated, as this would already be the
+finished model. The processed images therefore have to be manually copied in
+their respective folders.
+\newline
+The finally missing images, now have to be manually annotated, where finally the
+image annotator comes to play. Using this software it is just a matter of going
+through all remaining images, marking each face with a bounding box and labeling
+it correctly. Afterwards the Annotator offers a crop and save function, that
+takes care of cropping, scaling and correctly saving the images in the right
+labeled folders.

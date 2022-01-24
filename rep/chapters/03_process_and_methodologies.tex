@@ -45,8 +45,13 @@ stored annotations. There is a feature enabling the user to save every processed
 resized image to a specified location. It was disabled as it turned out not to
 be needed in this project. 
 
-\lstinputlisting[language=json,firstnumber=1,breaklines,caption={reduced example of saved annotations},captionpos=b]{../code/annotations.json}
-
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{annotator_in_action.png}
+    \caption{image annotator in action}
+    \label{fig:anno}
+\end{figure*}
+\lstinputlisting[language=json,firstnumber=1,breaklines,caption={reduced example of saved annotations},captionpos=b, numbers=right]{../code/annotations.json}
 The helping features are implemented as functions, that can be called through
 the given menus:
 
@@ -82,11 +87,6 @@ chose a label. Figure \ref{fig:anno} shows the annotator in action. By
 double-clicking or right-clicking the rectangle, this popup can be shown again
 at any time and the label changed. Right-clicking also gives the choice of
 deleting the rectangle.
-\begin{figure}
-    \includegraphics[width=\textwidth]{annotator_in_action.png}
-    \caption{image annotator in action}
-    \label{fig:anno}
-\end{figure}
 \newline
 This gives the annotator the full needed functionality and enables a quick and
 easy labeling of all the images. Once the labeling is done, the menu item
@@ -95,3 +95,4 @@ to 240x240 square format and saves them in folders according to their labeling
 in an by the user specified location.
 
 \subsection{Machine Learning Model}
+
