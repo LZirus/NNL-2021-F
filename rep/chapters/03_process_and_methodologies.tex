@@ -107,25 +107,61 @@ effectiveness. In addition to that the code offers interfaces for using the
 model to classify any kind of image, or even live-feed through a camera.
 \newline
 TODO: loading and structuring
-
-
+The first part into any machine learning algorithm is the dataset. This is used,
+to first train the network, by giving it an image to predict and based on the
+answer improving its decision process through backpropagation. After complete
+training, or even while the training process the dataset can also be used to
+determine the accuracy of the prediction. In order for this evaluation not to be
+biased, the dataset has to be split into a train and a test or validation set:
+\lstinputlisting[
+    language=json,
+    breaklines,
+    caption={splitting the dataset},
+    captionpos=b
+    ]{../code/dataset.py}
+This way the training can be done on separate data than the final validation of
+the effectiveness of the model. Otherwise it could be, that the model can
+specifically classify the images it trained on, but nothing else.
+\newline
 TODO: pre-processing
+Next come the pre-processing. Especially with smaller datasets like the one used
+here, it makes sense to gain a little more data by augmenting the images and
+creating multiple different ones from one. This is done by random rotations,
+shifts, flips and sometimes even change of contrast or similar features (Listing
+3, line 1-9). 
+\newline
+A ML model has also problems with non-binary categorizations, which is why so
+called one hot encoding on the labels can be helpful or even necessary (Listing
+3, line 11,12). 
+\newline
+A common pre-processing step with images, is also the rescaling of color-values.
+Usually they are saved as integer from 0 to 255. For a neural network it can be
+easier to work with values between 0 and 1, which is why they can be rescaled by
+multiplying each value with 1/255 (Listing 3, line 2).
 
+\lstinputlisting[
+    language=json,
+    firstnumber=1,
+    breaklines,
+    caption={data augmentation and one hot encoding},
+    captionpos=b
+    ]{../code/preprocessing.py}
 
 TODO: training
-
-
-TODO: evaluating
-
-used libraries:
-- tensorflow
-- keras and keras-tuner
-- opencv
-
-structured after tensorflow tutorial
-- load data
-- pre-process
-- ...
+Now finally it is time for the model creation, compilation and training or
+fitting. In the keras framework it is pretty simple to set up the layers one
+wants to use in the network by simply adding them in order to the model. This
+step is crucial, as it creates the overall network structure and determines how
+good the model can be trained later. 
+TODO: model-explanation
+\lstinputlisting[
+    language=json,
+    firstnumber=1,
+    breaklines,
+    caption={model layer structure},
+    captionpos=b, 
+    numbers=right
+    ]{../code/model.py}
 
 why this layer-structure 
 - rescaling -> between 0 and 1
@@ -136,7 +172,51 @@ why this layer-structure
 - dense-layer
 - dropout -> delete low confidences
 
-Problem:
--
+After setting up the structure, the model can be compiled using an optimizer as
+well as what should be optimized and finally fitted to the dataset. Especially
+while the fitting process it is important to specify a good amount of training
+epochs the model should go through, as using to few will leave potential unused
+and using to many will take a lot of time, and not do any more good.
+\lstinputlisting[
+    language=json,
+    firstnumber=1,
+    breaklines,
+    caption={model compilation and fitting},
+    captionpos=b, 
+    numbers=right
+    ]{../code/compile_and_fit.py}
 
-\lstinputlisting[language=json,firstnumber=1,breaklines,caption={reduced example of saved annotations},captionpos=b, numbers=right]{../code/model.py}
+
+TODO: evaluating
+Following the training of the model, finally the validation dataset can be used to get an
+evaluation of its performance. 
+
+
+TODO: problems
+
+
+TODO: additional - features
+To make the model easier accessible, the functionality was added to the image
+annotation software as well. It offers a new tab in the top menu bar with a few
+functions:
+\begin{description}[font=\sffamily\bfseries, leftmargin=1cm, style=nextline]
+    \item[train model]
+        this lets the user chose a directory which includes all labeled folders
+        with the respective dataset images; using this directory it loads the
+        dataset and trains the model; the output window unfortunately only shows
+        the whole output in the end, so the user has to wait a while
+    \item[save/load model]
+        saves or loads the model in two separate files; one contains all keras
+        settings needed to run the model, the other one, contains label names as
+        well as necessary images sizes for the model to integrate into the
+        annotator 
+    \item[classify current image]
+        this function takes all boxes drawn on the current window, that where
+        labeled with "None", crops them, and lets the model decide the correct
+        label; the label is set automatically and displayed on screen
+    \item[live classification]
+        this is an experimental feature, that opens the camera and for each
+        shown frame, uses the OpenCV library to cut out faces and plugging them
+        into the ML model; in the end it is able to tell on the live feed
+        whether a person is wearing a mask or not
+\end{description}

@@ -3,7 +3,7 @@ from tkinter import filedialog as fd
 from tkinter import messagebox
 
 import cv2
-from PIL import ImageTk, Image, ImageDraw
+from PIL import ImageTk, Image, ImageDraw, ImageFont
 
 from shapely.geometry import box, Point
 
@@ -529,6 +529,22 @@ def classifyImage():
         rect_to_category[i] = categories.index(label)
         messagebox.showinfo('Result',str(bounds)+':\nClassified with '+label+"\nLabel was updated")
         #os.remove("act_img.png")
+        
+        # draw rectangle on image
+        draw = ImageDraw.Draw(image, 'RGBA')
+        
+        font = ImageFont.load_default()
+        
+        x, y = bounds[0], bounds[1]
+        w, h = font.getsize(label)
+        
+        draw.rectangle((x, y, x + w, y + h), fill='blue')
+        draw.text((x, y), label, fill='white', font=font)
+        
+        # add the new image to TK-Panel
+        imagetk = ImageTk.PhotoImage(image)
+        image_panel.configure(image=imagetk)
+        image_panel.image = imagetk     # anti garbage-collection
         
         # call classify with img_cv image
 

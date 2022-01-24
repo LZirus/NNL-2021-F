@@ -1,0 +1,9 @@
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy']
+             )
+model.fit(train_batches,
+          epochs=15,
+          validation_data=test_batches,
+          verbose=1,
+          shuffle=True)

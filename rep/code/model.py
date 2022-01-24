@@ -1,10 +1,14 @@
-basic_model = Sequential([ 
-    Rescaling(1. /255),
-    augmentation,
-    Conv2D(32, (3,3), activation='relu'),
-    AveragePooling2D(pool_size=(7,7)),
-    Flatten(name="flatten"),
-    Dense(128, activation="relu"),
-    Dropout(0.5),
-    Dense(num_classes, activation="softmax")
-    ])
+model=Sequential()
+
+model.add(Conv2D(num_features,(3,3),activation='relu',input_shape=(width,height,3)))
+model.add(MaxPooling2D(2,2))
+model.add(Conv2D(num_features,(3,3),activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Conv2D(2*num_features,(3,3),activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Conv2D(2*num_features,(3,3),activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Flatten())
+model.add(Dropout(0.5))
+model.add(Dense(120,activation='relu'))
+model.add(Dense(3,activation='softmax'))
