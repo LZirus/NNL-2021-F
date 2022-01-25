@@ -16,12 +16,12 @@ in both parts.
 \subsection{Part I - Data Collection and Preparation}
 
 The data collection is already a big part of the project, as there are a lot of
-things that can go wrong here. The data is the main thing that influences the
-final model in the decision it makes. A ML model is in this context not
-different than humans, as it can only act on its own experience. Therefore
+things that can go wrong here. The data is the main influence of the
+final model and the decisions it makes. A ML model does not differ a lot from humans
+in this context, as both can only act on their own experiences. Therefore
 making sure the data is chosen in conjunction with the final goals is essential.
 As the scale of this project is fairly small and its purpose is a first
-experimentation with the concept, it was sufficient to expect the the model to
+experimentation with the concept, it was sufficient to expect the model to
 recognize the three members of this project.
 \newline
 The collected data will most likely not be in a format, that is easily readable
@@ -35,21 +35,20 @@ its context.
 To achieve all that in a streamlined, standardized and user friendly way, the
 development of an image annotation software was necessary. In addition to the
 manual annotation there are some automation tricks that can be used to help with
-easy classifiable data. 
+easily classifiable data. 
 
 \subsection{Part II - Machine Learning Model}
 
 This of course is the center of the project. Setting up and compiling a ML
-model, that is capable of taking an image of a face and determining whether the
+model, capable of, given an image of a face, determining whether the
 person shown is wearing a mask and what kind if yes.
 \newline
 As mentioned before, the goal was limited to being able to detect masks on the
 faces of the team members of this project, as we would have needed a much larger
 and more diverse dataset to achieve reliable results with all other faces. Still
-the hope is, that the model will be able to identify more faces, that have
-similarities to the team members. This will most likely include white, western
-men, while there will be difficulties with different skin colors and facial
-structures.
+the hope is, that the model will be able to generalize and extend to more, 
+mostly similar faces. This will probably include white, western
+men. Difficulties might occur with people of color, with different facial structures or women.
 
 \subsection{Team Members and Roles}
 
@@ -65,6 +64,14 @@ a streamlined process for the creation of the dataset, augmentation and later
 labeling. Micheal was mainly in charge of the UI (User Interface) and UE (User
 Experience) of the annotation software. 
 \newline
-TODO: Part II 
-TODO: Who coded
-TODO: Who wrote the paper
+The second part of the project was led by Julien, who already had experience
+with machine learning. He setup the structure and all necessary methods and
+created a first model. Together as a team the specifics where developed,
+choosing, the model, parameters and co. Leonhard took care of the API and
+connection to the image annotator software. Michael took care of the dataset,
+the labeling and pre-processing.
+\newline
+Just as the code the paper was developed as team, meaning constant contact and
+collaboration. Leonhard to part of the writing while in conversation with the
+respective chapter expert. Correction was done by all team members separately.
+In general the work was well balanced.
