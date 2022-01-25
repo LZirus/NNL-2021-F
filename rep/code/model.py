@@ -1,10 +1,13 @@
-basic_model = Sequential([ 
-    Rescaling(1. /255),
-    augmentation,
-    Conv2D(32, (3,3), activation='relu'),
-    AveragePooling2D(pool_size=(7,7)),
-    Flatten(name="flatten"),
-    Dense(128, activation="relu"),
-    Dropout(0.5),
-    Dense(num_classes, activation="softmax")
-    ])
+vgg_small_model=Sequential()
+vgg_small_model.add(Conv2D(64,(3,3),activation='relu',input_shape=(180,180,3)))
+vgg_small_model.add(MaxPool2D(2,2))
+vgg_small_model.add(Conv2D(64,(3,3),activation='relu'))
+vgg_small_model.add(MaxPool2D(2,2))
+vgg_small_model.add(Conv2D(128,(3,3),activation='relu'))
+vgg_small_model.add(MaxPool2D(2,2))
+vgg_small_model.add(Conv2D(128,(3,3),activation='relu'))
+vgg_small_model.add(MaxPool2D(2,2))
+vgg_small_model.add(Flatten())
+vgg_small_model.add(Dropout(0.5))
+vgg_small_model.add(Dense(120,activation='relu'))
+vgg_small_model.add(Dense(num_labels,activation='softmax'))
