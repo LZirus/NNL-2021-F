@@ -1,250 +1,344 @@
 import cv2
 import os
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 import numpy as np
-import matplotlib.pyplot as plt
 from tensorflow.keras.layers import MaxPool2D, Conv2D, Input, Dense, Flatten, AveragePooling2D, Dropout, MaxPooling2D
-import tensorflow.keras.layers as lays
-from tensorflow.keras.layers.experimental.preprocessing import Rescaling, RandomContrast, RandomFlip, RandomRotation
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
-from tensorflow.keras.preprocessing import image_dataset_from_directory
-from tensorflow.keras import Sequential, losses as lfs
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras import models
-import keras_tuner as kt
-from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.layers.experimental.preprocessing import RandomContrast, RandomFlip, RandomRotation
+from tensorflow.keras.preprocessing.image import load_img, img_to_array, ImageDataGenerator
+from tensorflow.keras import Sequential
+from tensorflow.keras import utils, models
 
-augmentation = Sequential([
-  RandomFlip("horizontal"),
-  RandomRotation(0.4),
-  RandomContrast(0.5)
-])
-batch_size = 32
-img_size = (180, 180)
-img_size_vgg = (224, 224)
-epochs = 11
-checkpoint_path = "mask_model/weights.ckpt"
-checkpoint_dir = os.path.dirname(checkpoint_path)
-imgs_path = os.path.join('..', 'img')
-num_classes = 2
+# some useful variables
 
-correct_usage=  'correct usage: \n' + 'predict([path to image], \'category\' \n' + 'predict([path to image], \'probabilities\' \n' + 'predict([path to image], \'detection\' \n' + 'predict(\'live_detection\')'
+batch_size = 32                             # the amount of images processed at once
+img_size = (180, 180)                       # img_size in pixels
+img_size_vgg = (224, 224)                   # the vgg network needs a fixed img_size
+def_epochs = 11                                 # default epochs used in training - should be chosen wisely
+imgs_path = os.path.join('..', 'img')       # path to the dataset
+num_classes = 3                             # default number of classes/ labels
 
-def select_model(model_name, **kwargs):
-    num_labels = kwargs.get('num_classes', num_classes)
+# String for the correct usage of predict()
+correct_usage = ('correct usage: \n' 
+                'predict(\'category\', [model], [labels], img_path=[img_path]) \n'
+                'predict(\'probabilities\', [model], [labels], img_path=[img_path]) \n'
+                'predict(\'detection\', [model], [labels], img_path=[img_path])\n'
+                'predict(\'live_detection\', [model], [labels])'
+                'optional parameter: img_size, default=(180,180)')
 
-    basic_model = Sequential([ 
-        Rescaling(1. /255),
-        #augmentation,
-        Conv2D(32, (3,3), activation='relu'),
-        AveragePooling2D(pool_size=(7,7)),
-        Flatten(name="flatten"),
-        Dense(128, activation="relu"),
-        Dropout(0.5),#drops small confidences
-        Dense(num_labels, activation="softmax")
-    ])
 
-    small_model = Sequential([ 
-        Rescaling(1. /255),
-        augmentation,
-        Conv2D(filters=128, kernel_size=(5,5), activation='relu'),
-        Conv2D(filters=128, kernel_size=(5,5), activation='relu'),
-        MaxPool2D(pool_size=(3,3)),
-        Flatten(name="flatten"),
-        Dense(units=224, activation="relu"),
-        Dropout(0.5),#drops small confidences
-        Dense(num_labels, activation="softmax")
-        ])
+####### FaceNet
 
-    vgg_small_model = Sequential([ 
-        Rescaling(1. /255),
-        Conv2D(64, (3,3), activation='relu'),
-        Conv2D(64, (3,3), activation='relu'),
-        MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
-        Conv2D(128, (3,3), activation='relu'),
-        Conv2D(128, (3,3), activation='relu'),
-        MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
-        Flatten(name="flatten"),
-        Dense(256, activation="relu"),
-        Dropout(0.5),#drops small confidences
-        Dense(num_labels, activation="softmax")
-        ])
-
-    vgg_model = Sequential([
-        Rescaling(1. /255),
-        Conv2D(input_shape=(224,224,3), filters=64, kernel_size=(3,3), padding="same", activation="relu", strides=(1,1)), 
-        Conv2D(filters=64,kernel_size=(3,3),padding="same", activation="relu"),
-        MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
-        Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"),
-        Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"),
-        MaxPool2D(pool_size=(2, 2), strides=(2)),
-        Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
-        Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
-        Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"),
-        MaxPool2D(pool_size=(2, 2), strides=(2)),
-        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-        MaxPool2D(pool_size=(2, 2), strides=(2)),
-        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-        Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"),
-        MaxPool2D(pool_size=(2, 2), strides=(2)),
-        Flatten(),
-        Dense(units=4096, activation="relu"),
-        Dense(units=4096, activation="relu"),
-        Dense(units=num_labels, activation="softmax")
-    ])
-
-    if model_name == 'basic_model':
-        return basic_model, (180,180)
-    
-    if model_name == 'small_model':
-        return small_model, (180,180)
-
-    if model_name == 'vgg_model':
-        return vgg_model, (180,180)
-    
-    if model_name == 'vgg_small_model':
-        return vgg_small_model, (224,224)
-
-##FaceNet
-
+# converts a loaded image into the correct format for the openCV face detection network
 def convertImg(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+# uses the FaceNet to localize faces in a picture
 def faceNetLocalize(img, **kwargs):
-    scaleFactor = kwargs.get('scaleFactor', 1.1)    #between 1.05 (quality) and 1.4 (speed) recommended (scale of the faces we search for)
-    minNeighbors = kwargs.get('minNeighbors', 4)    #between 3 (quantity) and 6 (quality) recommended
-    minSize = kwargs.get('minSize', (10, 10))       #min size of a face in the picture
-    faceNet = kwargs.get('faceNet', init_faceNet())
+    #parameters
+    scaleFactor = kwargs.get('scaleFactor', 1.1)    # between 1.05 (quality) and 1.4 (speed) recommended (scale of the faces we search for)
+    minNeighbors = kwargs.get('minNeighbors', 4)    # between 3 (quantity) and 6 (quality) recommended
+    minSize = kwargs.get('minSize', (10, 10))       # min size of a face in the picture
+    faceNet = kwargs.get('faceNet', init_faceNet()) # pretrained model from openCV
     
+    # conversion and localization
     img_cvt = convertImg(img)
     return faceNet.detectMultiScale3(img_cvt, scaleFactor=scaleFactor, minNeighbors=minNeighbors, minSize=minSize, outputRejectLevels = True)
 
+# initialize the network using openCV
 def init_faceNet(**kwargs):
     path = kwargs.get('path', 'haarcascade_frontalface_default.xml')
     return cv2.CascadeClassifier(path)
 
-##Mask - Classifier
+
+######### MASK - CLASSIFIER
+
+### get the untrained model structure by name
+
+def select_model(model_name, **kwargs):
+    #optional parameters
+    num_labels = kwargs.get('num_classes', num_classes) # number of labels: is necessary for a correct output on the last Dense layer
+
+    # simplest model
+    basic_model = Sequential()
+    basic_model.add(Conv2D(32, (3,3), activation='relu', input_shape=(180,180,3)))
+    basic_model.add(AveragePooling2D(pool_size=(7,7)))
+    basic_model.add(Flatten(name="flatten"))
+    basic_model.add(Dense(128, activation="relu"))
+    basic_model.add(Dropout(0.5)) #drops small confidences
+    basic_model.add(Dense(num_labels, activation="softmax"))
+    
+    #more complicated model, utilizing 2 convolutional layers like the vgg - still very time-consuming in training
+    small_model = Sequential()
+    small_model.add(Conv2D(filters=128, kernel_size=(5,5), activation='relu', input_shape=(180,180,3)))
+    small_model.add(Conv2D(filters=128, kernel_size=(5,5), activation='relu'))
+    small_model.add(MaxPool2D(pool_size=(3,3)))
+    small_model.add(Flatten(name="flatten"))
+    small_model.add(Dense(units=224, activation="relu"))
+    small_model.add(Dropout(0.5))#drops small confidences
+    small_model.add(Dense(num_labels, activation="softmax"))
+    
+    #smaller version of the "vgg_small_model"
+    vgg_smaller_model=Sequential()
+    vgg_smaller_model.add(Conv2D(64,(3,3),activation='relu',input_shape=(180,180,3)))
+    vgg_smaller_model.add(MaxPool2D(2,2))
+    vgg_smaller_model.add(Conv2D(128,(3,3),activation='relu'))
+    vgg_smaller_model.add(MaxPool2D(2,2))
+    vgg_smaller_model.add(Flatten())
+    vgg_smaller_model.add(Dropout(0.5))
+    vgg_smaller_model.add(Dense(120,activation='relu'))
+    vgg_smaller_model.add(Dense(num_labels,activation='softmax'))
+    
+    # simpler version of the vgg model, utilizes only one convolutional layer at a time, before max-pooling
+    # but keeps the general design of the vgg model
+    vgg_small_model=Sequential()
+    vgg_small_model.add(Conv2D(64,(3,3),activation='relu',input_shape=(img_size[0],img_size[1],3)))
+    vgg_small_model.add(MaxPool2D(2,2))
+    vgg_small_model.add(Conv2D(64,(3,3),activation='relu'))
+    vgg_small_model.add(MaxPool2D(2,2))
+    vgg_small_model.add(Conv2D(128,(3,3),activation='relu'))
+    vgg_small_model.add(MaxPool2D(2,2))
+    vgg_small_model.add(Conv2D(128,(3,3),activation='relu'))
+    vgg_small_model.add(MaxPool2D(2,2))
+    vgg_small_model.add(Flatten())
+    vgg_small_model.add(Dropout(0.5))
+    vgg_small_model.add(Dense(120,activation='relu'))
+    vgg_small_model.add(Dense(num_labels,activation='softmax'))
+
+
+    # the vgg model is a state of the art model design, we do not have the necessary power or training data to utilize this model
+    vgg_model = Sequential()
+    vgg_model.add(Conv2D(input_shape=(224,224,3), filters=64, kernel_size=(3,3), padding="same", activation="relu", strides=(1,1))) 
+    vgg_model.add(Conv2D(filters=64,kernel_size=(3,3),padding="same", activation="relu"))
+    vgg_model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+    vgg_model.add(Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(MaxPool2D(pool_size=(2, 2), strides=(2)))
+    vgg_model.add(Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(MaxPool2D(pool_size=(2, 2), strides=(2)))
+    vgg_model.add(Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(MaxPool2D(pool_size=(2, 2), strides=(2)))
+    vgg_model.add(Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu"))
+    vgg_model.add(MaxPool2D(pool_size=(2, 2), strides=(2)))
+    vgg_model.add(Flatten())
+    vgg_model.add(Dense(units=4096, activation="relu"))
+    vgg_model.add(Dense(units=4096, activation="relu"))
+    vgg_model.add(Dense(units=num_labels, activation="softmax"))
+    
+
+    # returns the correct model
+
+    if model_name == 'basic_model':
+        #basic_model.summary()
+        return basic_model
+    
+    if model_name == 'small_model':
+        #small_model.summary()
+        return small_model
+
+    if model_name == 'vgg_model':
+        #vgg_model.summary()
+        return vgg_model
+    
+    if model_name == 'vgg_small_model':
+        #vgg_small_model.summary()
+        return vgg_small_model
+    
+    if model_name == 'vgg_smaller_model':
+        #vgg_smaller_model.summary()
+        return vgg_smaller_model
+
+
+
+##### load images 
 
 def load_dataset(**kwargs):
+    # optional values
     imgs_path = kwargs.get('imgs_path', os.path.join('..', 'img'))
     img_size = kwargs.get('img_size', (180, 180))
-    batch_size = kwargs.get('batch_size', 32)
 
-    train_ds = image_dataset_from_directory(imgs_path,  validation_split=0.2, subset="training",  seed=3, image_size=img_size,  batch_size=batch_size)
-    val_ds = image_dataset_from_directory(imgs_path,  validation_split=0.2, subset="validation",  seed=3, image_size=img_size,  batch_size=batch_size)
-    labels = train_ds.class_names
+    # initializing lists
+    valid_images = [".jpg",".png",".jpeg",".JPG"]
+    x=[]
+    y=[]
+    
+    # loop over files in image directory
+    for root, dirs, files in os.walk(imgs_path):
+        for filename in files:
+            end = os.path.splitext(filename)[1]
+            if end.lower() not in valid_images:
+                continue
+            image = load_img(os.path.join(root, filename), target_size=img_size)
+            image = img_to_array(image)
+            
+            label = os.path.join(root, filename).split(os.path.sep)[-2]
+            
+            x.append(image)
+            y.append(label)
+    
+    # convert images and labels to arrays for further use
+    x = np.array(x, dtype="float32")
+    y = np.array(y)
 
-    y_test = np.concatenate([y for _, y in val_ds], axis=0)
-    x_test = np.concatenate([x for x, _ in val_ds], axis=0)
-    return train_ds, val_ds, labels, y_test, x_test
+    ## convert labels to ints from 0 ... len(labels)-1
+    labels = []
+    for i in range(len(y)):
+        try:
+            j = labels.index(y[i])
+        except:
+            labels.append(y[i])
+            j = labels.index(y[i])
+        y[i] = j
+    y.astype(int)
+    
+    ## split dataset
+    trainX, testX, trainY, testY = train_test_split(x, y, test_size=0.2, random_state=3)
+
+    ## one-hot encoding
+    trainY = utils.to_categorical(trainY, num_classes)
+    testY = utils.to_categorical(testY, num_classes)
+
+    ## data augmentation
+    datagen = ImageDataGenerator(
+        rescale=1./255,
+        featurewise_center=True,
+        featurewise_std_normalization=True,
+        rotation_range=20,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        validation_split=0.2
+    )
+
+    ## merge xs and ys
+    train_batches = datagen.flow(trainX, trainY, batch_size=32, subset='training')
+    test_batches  = datagen.flow(trainX, trainY, batch_size=32, subset='validation')
+    
+    return train_batches, test_batches, labels, testX, testY, trainX, trainY
+
+### use loaded images to train specified model
 
 def train_model(model, train_ds, val_ds, **kwargs):
-    epochs = kwargs.get('epochs', 10)
-    checkpoint_path = kwargs.get('checkpoint_path', "mask_model/weights.ckpt")
-
-    #Callback to save model's weights
-    #https://www.tensorflow.org/tutorials/keras/save_and_load
-    cp_callback = ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose = 1)
-
-    model.compile(optimizer=Adam(0.01), loss=lfs.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
-    history = model.fit(train_ds, validation_data=val_ds, epochs=epochs, callbacks=[cp_callback])
+    # optional parameter
+    epochs = kwargs.get('epochs', def_epochs)   # training epochs
+    
+    # compile the model
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+    
+    # train/fit the model and save the history for documentation/ testing purposes
+    history = model.fit(train_ds, validation_data=val_ds, epochs=epochs)
     return history
 
-def evaluate_model(x_test, y_test, model):
-    results = model.evaluate(x_test, y_test, batch_size=32)
-    print(results)
-    
-    y_pred_confidences = model.predict(x_test)
-    y_pred = [np.argmax(cs) for cs in y_pred_confidences]
-    print(classification_report(y_test, y_pred))
+######### Load/ Save model
 
 def save_model(path, model):
     model.save(path, save_format="h5")
-
+    
 def load_model_good(path):
     return models.load_model(path)
 
-def load_model(**kwargs):
-    checkpoint_path = kwargs.get('checkpoint_path', "mask_model/weights.ckpt")
-    model = kwargs.get('model', select_model('basic_model'))
-    model.load_weights(checkpoint_path)
-    return model
 
+########### Prediction/ Application part
+
+# returns the label with the highest confidence of a prediction
 def maskPredict(model, img, labels):
     pred = model.predict(img[None])
-    print(pred)
     label_index = np.argmax(pred)
-    print(label_index)
+    print(labels[label_index])
     return labels[label_index], pred[0][label_index]
 
 
 #mode can be 'category', 'probabilities', 'detection', 'live_detection'
-def predict(mode, **kwargs):
+def predict(mode, model, **kwargs):
+    #model = kwargs.get('model', load_model())
     img_path = kwargs.get('img_path', None)
-    model = kwargs.get('model')
+    img_size = kwargs.get('img_size', (180, 180))
     labels = kwargs.get('labels', None)
-    size = kwargs.get('img_size', img_size)
     
+    # display the help menu 
+    if mode=='help':
+        print(correct_usage)
+        return
+
+    # change to live_detection and interpret camera feed
     if mode=='live_detection':
-        live_det()
+        live_det(model, img_size, labels)
         return
     
+    # print help menu, as function was malused
     if img_path is None:
         print(correct_usage)
         return
 
     #load_img
-    img = load_img(img_path, target_size = size)
+    img = load_img(img_path, target_size = img_size)
     img = img_to_array(img)
     
+    #change into detection mode
     if mode=='detection':
         detect(img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         return
         
+    # change into category mode, printing the label of highest confidence
     if mode=='category':
-        label, confidence = maskPredict(model, img, labels)
+        label, _ = maskPredict(model, img, labels)
         return label
         
+    # change into probability mode, printing the probability for each label
     if mode=='probabilities':
-        #TODO: schöneres Format
-        return model.predict(img[None])
+        confidences = model.predict(img[None])[0]
+        ret_str = ''
+        for lab in range(len(labels)):
+          ret_str = ret_str + (f"{labels[lab]}: {confidences[lab]}")
+        return ret_str
 
+    # no valid mode was specified: print help menu
     else:
         print(correct_usage)
 
-def detect(img):
+# detect and classify a face on an image
+def detect(model, img, img_size, labels):
     faceLocs, rejectLevels, confidences = faceNetLocalize(img)
         
     for (x, y, w, h) in faceLocs:
         #crop image and predict label of cropped image
-        img_crop = img[y:y+h, x:x+w]
-        label, confidence_mask = maskPredict(img)
+        img_crop = img[y:y+w, x:x+h]
+        img_crop = cv2.resize(img_crop, img_size)
+        img_crop = img_crop / 255
+        label, confidence_mask = maskPredict(model, img_to_array(img_crop), labels)
+
         #show label/ bounding box on image
-        cv2.putText(img, f"{label}, confidence:{confidence_mask}", (x+w-30, y+h), cv2.FONT_HERSHEY_PLAIN, 1.0, cv2.CV_RGB(0,255,0), 2.0) 
-        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(img, f"{label}, confidence:{confidence_mask}", (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2) 
+        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 3)
     
     cv2.imshow('live_output', img)
 
-def live_det():
-    #TODO: errorhandling for camera
-    
+# detect and classify images from a live-feed
+def live_det(model, img_size, labels):
     wait_time = 10 #time in ms to wait before refreshing feed
     camera = cv2.VideoCapture(0) #Input value might differ on different systems
     
     while(True):
-        _, img = camera.read()
-
-        detect(img)
+        ret, img = camera.read()
+        if not ret:
+            print('Error: failed reading camera')
+            return 'Error: failed reading camera'
+        detect(model, img, img_size, labels)
 
         #wait for ESC or q
         if (cv2.waitKey(wait_time) & 0xFF) in [27, ord('q')]: 
             break
 
     camera.release()
+    cv2.destroyAllWindows()
     return 'live_output'
+
+
