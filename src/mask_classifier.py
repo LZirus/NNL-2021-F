@@ -57,6 +57,7 @@ def init_faceNet(**kwargs):
 def select_model(model_name, **kwargs):
     #optional parameters
     num_labels = kwargs.get('num_classes', num_classes) # number of labels: is necessary for a correct output on the last Dense layer
+    # num_classes automatically set in load_dataset
 
     # simplest model
     basic_model = Sequential()
@@ -91,7 +92,7 @@ def select_model(model_name, **kwargs):
     # simpler version of the vgg model, utilizes only one convolutional layer at a time, before max-pooling
     # but keeps the general design of the vgg model
     vgg_small_model=Sequential()
-    vgg_small_model.add(Conv2D(64,(3,3),activation='relu',input_shape=(img_size[0],img_size[1],3)))
+    vgg_small_model.add(Conv2D(64,(3,3),activation='relu',input_shape=(180,180,3)))
     vgg_small_model.add(MaxPool2D(2,2))
     vgg_small_model.add(Conv2D(64,(3,3),activation='relu'))
     vgg_small_model.add(MaxPool2D(2,2))
@@ -135,29 +136,34 @@ def select_model(model_name, **kwargs):
 
     if model_name == 'basic_model':
         #basic_model.summary()
-        return basic_model
+        return basic_model, img_size
     
     if model_name == 'small_model':
         #small_model.summary()
-        return small_model
+        return small_model, img_size
 
     if model_name == 'vgg_model':
         #vgg_model.summary()
-        return vgg_model
+        return vgg_model, img_size_vgg
     
     if model_name == 'vgg_small_model':
         #vgg_small_model.summary()
-        return vgg_small_model
+        return vgg_small_model, img_size
     
     if model_name == 'vgg_smaller_model':
         #vgg_smaller_model.summary()
-        return vgg_smaller_model
+        return vgg_smaller_model, img_size
+    
+    return vgg_small_model, img_size
 
 
 
 ##### load images 
 
 def load_dataset(**kwargs):
+    global num_classes
+    
+    print("Loading Dataset")
     # optional values
     imgs_path = kwargs.get('imgs_path', os.path.join('..', 'img'))
     img_size = kwargs.get('img_size', (180, 180))
@@ -196,6 +202,9 @@ def load_dataset(**kwargs):
         y[i] = j
     y.astype(int)
     
+    num_classes = len(labels)
+    print(num_classes, "classes")
+    
     ## split dataset
     trainX, testX, trainY, testY = train_test_split(x, y, test_size=0.2, random_state=3)
 
@@ -229,10 +238,13 @@ def train_model(model, train_ds, val_ds, **kwargs):
     epochs = kwargs.get('epochs', def_epochs)   # training epochs
     
     # compile the model
-    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+    model.compile(
+        loss='mean_squared_error', 
+        optimizer='adam', 
+        metrics=['accuracy'])
     
     # train/fit the model and save the history for documentation/ testing purposes
-    history = model.fit(train_ds, validation_data=val_ds, epochs=epochs)
+    history = model.fit(train_ds, validation_data=val_ds, epochs=epochs, verbose=1, shuffle=True)
     return history
 
 ######### Load/ Save model
@@ -289,16 +301,22 @@ def predict(mode, model, **kwargs):
         
     # change into category mode, printing the label of highest confidence
     if mode=='category':
+        img = img / 255
         label, _ = maskPredict(model, img, labels)
         return label
         
     # change into probability mode, printing the probability for each label
     if mode=='probabilities':
+        img = img / 255
         confidences = model.predict(img[None])[0]
-        ret_str = ''
+        ret = {}
         for lab in range(len(labels)):
-          ret_str = ret_str + (f"{labels[lab]}: {confidences[lab]}")
-        return ret_str
+            ret[labels[lab]] = confidences[lab]
+        # ret_str = ''
+        # for lab in range(len(labels)):
+        #   ret_str = ret_str + (f"{labels[lab]}: {confidences[lab]}")
+        # return ret_str
+        return ret
 
     # no valid mode was specified: print help menu
     else:

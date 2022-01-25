@@ -54,6 +54,7 @@ DEBUG = True
 # Class Window:
 # - initializing top menu
 # - taking care of popup fireing and value return
+# inspired by https://solarianprogrammer.com/2018/04/20/python-opencv-show-image-tkinter-window/
 class Window(Frame):
     def __init__(self, master=None):
         # init tkinter frame and keep reference
@@ -106,6 +107,8 @@ class Window(Frame):
         categoryMenu.add_command(label="Export Categories as XLSX", command=exportXLSX)
         
         # -> machine learning menu
+        learningMenu.add_command(label="Auto Detect Faces", command=auto_detect)
+        learningMenu.add_separator()
         learningMenu.add_command(label="Crop & Save Dataset", command=crop_and_save)
         
         modelMenu.add_command(label="Train model", command=trainModel)
@@ -160,6 +163,8 @@ class popupWindow(object):
             self.oneInput(top, text)
         elif type == "two":
             self.twoInput(top, text)
+        elif type == "ml":
+            self.ml_input(top)
         elif type == "list":
             self.list(top, text)
         elif type == "select":
@@ -210,6 +215,31 @@ class popupWindow(object):
         self.drop = OptionMenu(top, self.active, *categories)
         self.drop.pack()
 
+        self.e1 = Entry(top)
+        self.e1.pack()
+
+        self.b = Button(top, text='Ok', command=lambda: self.cleanup("two"))
+        self.b.pack()
+    
+    # Select menu for ml_model and Text-Input for Epochs
+    def ml_input(self, top):
+        top.wm_title("Input")
+
+        self.l = Label(top, text="Select ML-Model and Epochs")
+        self.l.pack()
+        
+        models = ["basic_model",
+                  "vgg_smaller_model",
+                  "vgg_small_model (Recommended)",
+                  "vgg_model (Very Long Computation)"]
+
+        # Dropdown-Menu
+        self.active = StringVar()
+        self.active.set("vgg_small_model")
+        self.drop = OptionMenu(top, self.active, *models)
+        self.drop.pack()
+
+        Label(top, text="Number Epochs: ").pack()
         self.e1 = Entry(top)
         self.e1.pack()
 
@@ -449,13 +479,25 @@ ml_size = None
 def trainModel():
     global ml_model, labels, ml_size
     
-    ml_model, ml_size = mask_classifier.select_model("basic_model")
-    epochs = 10
+    window.popup("Replace Category:", "ml")
+    model, epochs = window.entryValues()
+    
+    try:
+        epochs = int(epochs)
+        model = str(model.split(' ')[0])
+    except:
+        print("Invalid Values")
+        messagebox.showinfo('Input Error',"Invalid values")
+        return
+    
+    print(model, epochs)
+    
+    ml_model, ml_size = mask_classifier.select_model(model)
         
     window.popup_stdout()
     
-    train_ds, val_ds, labels, y_test, x_test = mask_classifier.load_dataset(imgs_path=fd.askdirectory())
-    mask_classifier.train_model(ml_model, train_ds, val_ds)
+    train_batches, test_batches, labels, testX, testY, trainX, trainY = mask_classifier.load_dataset(imgs_path=fd.askdirectory())
+    mask_classifier.train_model(ml_model, train_batches, test_batches)
     
     sys.stdout = sys.__stdout__
     return
@@ -523,30 +565,39 @@ def classifyImage():
         # img_cv = cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR)
 
         cropped.save("act_img.png", "PNG")
-        label = mask_classifier.predict('category', img_path="act_img.png", model=ml_model, labels=labels, img_size=ml_size)
+        probs = mask_classifier.predict('probabilities', img_path="act_img.png", model=ml_model, labels=labels, img_size=ml_size)
+        
+        label = max(probs, key=probs.get)
+        confidence = max(probs.values())
         
         if DEBUG: print(label)
-        rect_to_category[i] = categories.index(label)
-        messagebox.showinfo('Result',str(bounds)+':\nClassified with '+label+"\nLabel was updated")
-        #os.remove("act_img.png")
-        
-        # draw rectangle on image
+        # draw text on image
         draw = ImageDraw.Draw(image, 'RGBA')
-        
         font = ImageFont.load_default()
+        text = label + ": " + str(confidence)
         
         x, y = bounds[0], bounds[1]
-        w, h = font.getsize(label)
+        w, h = font.getsize(text)
         
         draw.rectangle((x, y, x + w, y + h), fill='blue')
-        draw.text((x, y), label, fill='white', font=font)
+        draw.text((x, y), text, fill='white', font=font)
         
         # add the new image to TK-Panel
         imagetk = ImageTk.PhotoImage(image)
         image_panel.configure(image=imagetk)
         image_panel.image = imagetk     # anti garbage-collection
         
-        # call classify with img_cv image
+        
+        rect_to_category[i] = categories.index(label)
+        text = "== " + str(bounds) + " =="
+        text += "\n\nClassified as " + label + "\n"
+        for key in probs:
+            text += "\n" + key + ":\t" + str(probs[key])
+        text += "\n\n Label was updated"
+        messagebox.showinfo('Result',text)
+        
+        os.remove("act_img.png")
+    
 
 def liveClassify():
     if not ml_model:
@@ -568,7 +619,7 @@ class RedirectText(object):
     def write(self, string):
         """"""
         for c in string:
-            if c == "\r":
+            if c == "\r" or c == "\n" or c == "\\r":
                 self.output.insert(END, self.text)
                 self.text = ""
             if c != "\b":
@@ -579,8 +630,59 @@ class RedirectText(object):
     def flush(self):
         return
 
-# ==============================================
+# ================= OPEN CV ===================
 
+def auto_detect():
+    global image, image_clean, image_save, imagetk, image_panel, rectangles, rect_to_category
+    cascPath = "haarcascade_frontalface_default.xml" 
+
+    # loads classifier from file
+    faceCascade = cv2.CascadeClassifier(cascPath)
+    
+    cv_file = cv2.cvtColor(np.array(image_clean), cv2.COLOR_RGB2BGR)
+    
+    gray = cv2.cvtColor(cv_file, cv2.COLOR_BGR2GRAY)
+    
+    try:
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=4,
+            minSize=(100, 100)
+        )
+    except:
+        print("Programm was not run in same folder as xml file!")
+        return
+    
+    for (x, y, w, h) in faces:
+        if image:
+            image_save = image.copy()
+        
+        # rectangle is final, so object is created
+        rect = box(x, y, x+w, y+h)
+
+        # check rectangle area  and validity
+        if rect.area < 5 or not check_validity(rect, x, y, x+w, y+h):
+            # image reset to before rectangle was drawn
+            image = image_save.copy()
+
+            # update image-panel
+            imagetk = ImageTk.PhotoImage(image)
+            image_panel.configure(image=imagetk)
+            image_panel.image = imagetk
+
+            continue
+
+        # rectangle was valid and is added to the list, image keeps drawn rectangle
+        rectangles.append(rect)
+        image_save = image.copy()
+        
+        rect_to_category.append(0)
+
+        # rectangle is drawn in final color
+        draw_rectangle((x, y), (x+w, y+h), (0, 0, 255))
+
+# ==============================================
 
 # fire PopUp to add a Category
 def addCategory():
@@ -1011,7 +1113,7 @@ def select_file(save, type, inifile='', title='Open a file', initialdir='~/info_
     return path
 
 # ================= Right click context menu =================
-
+# inspired by https://www.codershubb.com/create-context-menu-in-tkinter-python/ 
 selected_rect = None
 
 # show information of selected rectangle
