@@ -106,7 +106,6 @@ pre-processing the images, then training the model and finally evaluating it's
 effectiveness. In addition to that the code offers interfaces for using the
 model to classify any kind of image, or even live-feed through a camera.
 \newline
-TODO: loading and structuring
 The first part into any machine learning algorithm is the dataset. This is used,
 to first train the network, by giving it an image to predict and based on the
 answer improving its decision process through backpropagation. After complete
@@ -123,7 +122,6 @@ This way the training can be done on separate data than the final validation of
 the effectiveness of the model. Otherwise it could be, that the model can
 specifically classify the images it trained on, but nothing else.
 \newline
-TODO: pre-processing
 Next come the pre-processing. Especially with smaller datasets like the one used
 here, it makes sense to gain a little more data by augmenting the images and
 creating multiple different ones from one. This is done by random rotations,
@@ -148,32 +146,29 @@ multiplying each value with 1/255 (Listing 3, line 2).
     captionpos=b
     ]{../code/preprocessing.py}
 
-TODO: training
 Now finally it is time for the model creation, compilation and training or
 fitting. In the keras framework it is pretty simple to set up the layers one
 wants to use in the network by simply adding them in order to the model. This
 step is crucial, as it creates the overall network structure and determines how
 good the model can be trained later. 
-TODO: model-explanation
-The model was inspired by multiple sources and refined by trial and error \cite{Prakash2020}. 
-\lstinputlisting[
-    language=json,
-    firstnumber=1,
-    breaklines,
-    caption={model layer structure},
-    captionpos=b, 
-    numbers=right
-    ]{../code/model.py}
-
-why this layer-structure 
-- rescaling -> between 0 and 1
-- augmentation -> small dataset artificially enlarged
-- convocational layer -> pattern detection
-- max-pooling
-- flattening -> for dense-layer
-- dense-layer
-- dropout -> delete low confidences
-
+\newline
+The model was inspired by multiple sources and refined by trial and error
+\cite{Prakash2020}. \lstinputlisting[ language=json, firstnumber=1, breaklines,
+caption={model layer structure}, captionpos=b, numbers=right ]{../code/model.py}
+It uses alternating layers of convolution and max-pooling. This is the general
+approach taken when doing an image classification. The convolution-layer uses a
+filter to highlight certain features in the image, like edges for example, while
+the max-pooling layers are responsible for summarizing pixels and therefore
+simplifying the process. When going through training, the neural network will
+adjust the filters used in the convolution-layers. Finally in the end there is a
+flattening-layer as well as two dense-layers. As the convolution-layers work
+with image-data, represented as matrixes, they need to be flattened back to one
+dimension in order for the network to make a decision. Finally the two
+dense-layers are condensing the output down to exactly the number of classes we
+have so that the network is able to gives us an answer. Before the the
+dense-layers we also added a dropout-layer, that will already eliminate low
+confidences, so they won't mess up any other information reaching that state.
+\newline
 After setting up the structure, the model can be compiled using an optimizer as
 well as what should be optimized and finally fitted to the dataset. Especially
 while the fitting process it is important to specify a good amount of training
@@ -187,17 +182,12 @@ and using to many will take a lot of time, and not do any more good.
     captionpos=b, 
     numbers=right
     ]{../code/compile_and_fit.py}
-
-
-TODO: evaluating
-Following the training of the model, finally the validation dataset can be used to get an
-evaluation of its performance. 
-
-
+The loss-function we used, is the "mean_squared_error"-function as it performed
+slightly better compared to the other loss-functions. More details on that
+follow in the next chapter.
+\newline
 TODO: problems
-
-
-TODO: additional - features
+\newline
 To make the model easier accessible, the functionality was added to the image
 annotation software as well. It offers a new tab in the top menu bar with a few
 functions:

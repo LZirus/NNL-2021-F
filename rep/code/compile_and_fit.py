@@ -1,4 +1,4 @@
-model.compile(loss='categorical_crossentropy',
+model.compile(loss='mean_squared_error',
               optimizer='adam',
               metrics=['accuracy']
              )
