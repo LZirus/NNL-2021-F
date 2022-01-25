@@ -8,14 +8,14 @@ difficulties.
 \subsection{Image-Annotator}
 
 The purpose of the image annotation software is to give an easy possibility of
-labeling, rescaling, cropping and saving images in order to be used as dataset
+labeling, rescaling, cropping and saving images in order to be used as a dataset
 by the ML model.
 \newline
 The software was completely written in python, an interpreted script language.
 Still python has object oriented features, that where partly used in this
 project. 
 \newline
-The program program is structured in a way, to have two different classes,
+The program is structured in a way, to have two different classes,
 "Window" and "popupWindow" to take care of the UI part of the project. The rest
 of the functionality is structured into script-like functions. This structuring
 makes it easier to split the program into smaller tasks that can be distributed
@@ -35,8 +35,8 @@ this project was mainly focused on the menu bar on top in addition to a
 right-click menu. This choice was made in order to keep the overall frame clean
 and focused on the most important thing, the image.
 \newline
-The backend storage uses a python dictionary to at all time store all edits made
-by the software. If need be, the entirety of the data can be saved to file using
+The backend storage uses a python dictionary to be able to store the edits at all times.
+If need be, the entirety of the data can be saved to file using
 the JSON format and loaded back from it as well. To keep the storage as
 efficient as possible and maintain the possibility to easily change categories,
 they are saved separately with a second array only linking the index of
@@ -78,25 +78,25 @@ the given menus:
         location, that can be different for each image
 \end{description}
 
-Finally the main features of the annotation lay all in event listeners for the
-mouse pointer. The user is able to draw rectangles in case an image was loaded.
+Finally the main features of the annotation all lay in the mouse listeners. 
+The user is able to draw rectangles in case an image was loaded.
 A rectangle is only allowed if it has an area greater that 40 pixels, sides
 longer than 5 pixels and is not overlapping with another rectangle by more than
-20\%. Is a valid rectangle drawn, the user gets pointed details and is able to
+20\%. If a valid rectangle is drawn, the user gets pointed details and can
 chose a label. Figure \ref{fig:anno} shows the annotator in action. By
 double-clicking or right-clicking the rectangle, this popup can be shown again
 at any time and the label changed. Right-clicking also gives the choice of
 deleting the rectangle.
 \newline
-This gives the annotator the full needed functionality and enables a quick and
+This gives the annotator the needed functionality and enables a quick and
 easy labeling of all the images. Once the labeling is done, the menu item
 "\textbf{crop and save}" reloads each image at a time, crops all made rectangles
 to 240x240 square format and saves them in folders according to their labeling
-in an by the user specified location.
+in a location specified by the user.
 
 \subsection{Machine Learning Model}
 
-The Classifier is coded in python as well using the tensorflow library,
+The Classifier is also coded in python, using the tensorflow library,
 specifically the keras API, which is one of the most used deep learning
 frameworks. In addition the OpenCV library is used again for face recognition. 
 \newline
@@ -106,10 +106,10 @@ pre-processing the images, then training the model and finally evaluating it's
 effectiveness. In addition to that the code offers interfaces for using the
 model to classify any kind of image, or even live-feed through a camera.
 \newline
-The first part into any machine learning algorithm is the dataset. This is used,
-to first train the network, by giving it an image to predict and based on the
-answer improving its decision process through backpropagation. After complete
-training, or even while the training process the dataset can also be used to
+The first part of any machine learning algorithm is the dataset. It is used,
+to train the network, by giving it an image to predict and improve its decision 
+process through backpropagation, based on the answer. After
+training, or even during the training process the dataset can be used to
 determine the accuracy of the prediction. In order for this evaluation not to be
 biased, the dataset has to be split into a train and a test or validation set:
 \lstinputlisting[
@@ -188,8 +188,6 @@ and using to many will take a lot of time, and not do any more good.
 The loss-function we used, is the "mean\_squared\_error"-function as it performed
 slightly better compared to the other loss-functions. More details on that
 follow in the next chapter.
-\newline
-Some problems came up during development. 
 \newline
 To make the model easier accessible, the functionality was added to the image
 annotation software as well. It offers a new tab in the top menu bar with a few
