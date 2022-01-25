@@ -127,7 +127,7 @@ here, it makes sense to gain a little more data by augmenting the images and
 creating multiple different ones from one. This is done by random rotations,
 shifts, flips and sometimes even change of contrast or similar features (Listing
 3, line 1-9). The code used here was supported by the examples on the keras
-documentation page \cite{zoom_range=0.2}.
+documentation page \cite{imageDataGenerator}.
 \newline
 A ML model has also problems with non-binary categorizations, which is why so
 called one hot encoding on the labels can be helpful or even necessary (Listing
@@ -195,6 +195,10 @@ To make the model easier accessible, the functionality was added to the image
 annotation software as well. It offers a new tab in the top menu bar with a few
 functions:
 \begin{description}[font=\sffamily\bfseries, leftmargin=1cm, style=nextline]
+    \item[auto detect faces]
+        uses the OpenCV haarcascades, as explained before, to detect all faces
+        on the image and automatically places the boxes in the annotator; the
+        label is per default "None" ready for classification
     \item[train model]
         this lets the user chose a directory which includes all labeled folders
         with the respective dataset images; using this directory it loads the
@@ -208,7 +212,8 @@ functions:
     \item[classify current image]
         this function takes all boxes drawn on the current window, that where
         labeled with "None", crops them, and lets the model decide the correct
-        label; the label is set automatically and displayed on screen
+        label; the label is set automatically and displayed on screen together
+        with all confidences
     \item[live classification]
         this is an experimental feature, that opens the camera and for each
         shown frame, uses the OpenCV library to cut out faces and plugging them
