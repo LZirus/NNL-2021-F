@@ -128,7 +128,8 @@ Next come the pre-processing. Especially with smaller datasets like the one used
 here, it makes sense to gain a little more data by augmenting the images and
 creating multiple different ones from one. This is done by random rotations,
 shifts, flips and sometimes even change of contrast or similar features (Listing
-3, line 1-9). 
+3, line 1-9). The code used here was supported by the examples on the keras
+documentation page \cite{zoom_range=0.2}.
 \newline
 A ML model has also problems with non-binary categorizations, which is why so
 called one hot encoding on the labels can be helpful or even necessary (Listing
@@ -154,6 +155,7 @@ wants to use in the network by simply adding them in order to the model. This
 step is crucial, as it creates the overall network structure and determines how
 good the model can be trained later. 
 TODO: model-explanation
+The model was inspired by multiple sources and refined by trial and error \cite{Prakash2020}. 
 \lstinputlisting[
     language=json,
     firstnumber=1,
