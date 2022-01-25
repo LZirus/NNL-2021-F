@@ -160,14 +160,17 @@ approach taken when doing an image classification. The convolution-layer uses a
 filter to highlight certain features in the image, like edges for example, while
 the max-pooling layers are responsible for summarizing pixels and therefore
 simplifying the process. When going through training, the neural network will
-adjust the filters used in the convolution-layers. Finally in the end there is a
-flattening-layer as well as two dense-layers. As the convolution-layers work
-with image-data, represented as matrixes, they need to be flattened back to one
-dimension in order for the network to make a decision. Finally the two
-dense-layers are condensing the output down to exactly the number of classes we
-have so that the network is able to gives us an answer. Before the the
-dense-layers we also added a dropout-layer, that will already eliminate low
-confidences, so they won't mess up any other information reaching that state.
+adjust the filters used in the convolution-layers. Each convolution-layer has
+the option relu (Rectified Linear Unit), which takes care, that all negative
+values are turned into positive ones, so that the network doesn't get confused.
+At the bottom there eventually is a flattening-layer as well as two
+dense-layers. As the convolution-layers work with image-data, represented as
+matrixes; they need to be flattened back to one dimension in order for the
+network to make a decision. Finally the two dense-layers are condensing the
+output down to exactly the number of classes we have so that the network is able
+to gives us an answer. Before the the dense-layers we also added a
+dropout-layer, that will already eliminate low confidences, so they won't mess
+up any other information reaching that state.
 \newline
 After setting up the structure, the model can be compiled using an optimizer as
 well as what should be optimized and finally fitted to the dataset. Especially
@@ -182,7 +185,7 @@ and using to many will take a lot of time, and not do any more good.
     captionpos=b, 
     numbers=right
     ]{../code/compile_and_fit.py}
-The loss-function we used, is the "mean_squared_error"-function as it performed
+The loss-function we used, is the "mean\_squared\_error"-function as it performed
 slightly better compared to the other loss-functions. More details on that
 follow in the next chapter.
 \newline
