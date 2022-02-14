@@ -118,6 +118,7 @@ class Window(Frame):
         learningMenu.add_cascade(label="ML Model", menu=modelMenu)
         learningMenu.add_command(label="Classify current Image", command=classifyImage)
         learningMenu.add_command(label="Open Live-Classifier", command=liveClassify)
+        learningMenu.add_command(label="Streicheln", command=streicheln)
         
         
     # create PopUp-Window and wait for user
@@ -466,6 +467,23 @@ class popupWindow(object):
 
         # destroy popup
         self.top.destroy()
+
+
+def streicheln():
+    canvas = Image.new("RGB",(400,300),"white")
+    gif = Image.open('streicheln.gif', 'r')
+    frames = []
+    try:
+        while 1:
+            frames.append(gif.copy())
+            gif.seek(len(frames))
+    except EOFError:
+        pass
+
+    for frame in frames:
+        canvas.paste(frame)
+        canvas.show()
+
 
 # ========== Link to Machine Learning ==========
 
